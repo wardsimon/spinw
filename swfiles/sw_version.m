@@ -1,14 +1,14 @@
 function outStr = sw_version()
 % returns the installed version of SpinW
-% 
+%
 % ### Syntax
-% 
+%
 % `sw_version`
 %
 % `ver = sw_version`
-% 
+%
 % ### Description
-% 
+%
 % `sw_version` returns the installed version of SpinW and the matlab
 % version. This version number is identical to the tag of the [GitHub SpinW
 % repository](https://github.com/tsdev/spinw).
@@ -91,7 +91,7 @@ if ~isdeployed
             disp('You have the latest version of SpinW!')
         end
     end
-    
+        outStr = struct;
 else
     ver0 = struct;
     ver0.Name     = 'SpinW';
@@ -101,7 +101,7 @@ else
     ver0.Author   = 'S. Tóth and S. Ward';
     ver0.Contact  = 'spinw4@gmail.com, @spinw4 on Twitter';
     ver0.License  = 'GNU GENERAL PUBLIC LICENSE';
-
+    
     if nField == 0
         if any(revNum)
             ver0.Release = num2str(revNum);
@@ -131,7 +131,5 @@ else
             end
         end
     end
-else
-    outStr = struct;
 end
 end
