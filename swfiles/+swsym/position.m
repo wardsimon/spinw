@@ -1,44 +1,74 @@
 function [r, aIdx, opInfo] = position(symOp, r0, fid, tol)
 % generates symmetry equivalent positions
-%
-% [r, aIdx, opInfo] = SWSYM.POSITION(sym, r0, fid, tol)
 % 
-% It generates all symmetry equivalent atomic positions from a given
-% symmetry number and coordinates of the input atoms. If fid is defined,
-% the result is printed onto the command window.
+% ### Syntax
+% 
+% `[r, aIdx, opInfo] = swsym.position(sym,r0)`
+% 
+% `[r, aIdx, opInfo] = swsym.position(sym,r0,fid)`
 %
-% Input:
+% `[r, aIdx, opInfo] = swsym.position(sym,r0,fid,tol)`
 %
-% symOp         Matrix containing the symmetry operators 
-% r0            Atomic position in lattice units, dimensions are [3 nAtom].
-% fid           Optional input, the file identifier to print the result.
-%                   0   No output printed (Default)
-%                   1   Output printed onto the screen (Command Window)
-%                   fid Use with the following command: fid = fopen(path)
-% tol           Tolerance, distance within two atoms are considered
-%               identical, default is 1e-5 lattice unit. Necessary for
-%               badly defined atomic positions (when atoms are not exactly
-%               on the symmetry element) and to avoid numerical errors.
+% ### Description
+% 
+% `[r, aIdx, opInfo] = swsym.position(sym, r0, fid, tol)` generates all
+% symmetry equivalent atomic positions from a given space group and
+% coordinates of the symmetry inequivalent atoms. If `fid` is defined, the
+% result are printed onto the corresponding file.
+% 
+% ### Input Arguments
+% 
+% `sym`
+% : Either the label of the space group or the index from
+%   the [International Tables of Crystallography](http://it.iucr.org/A/) or
+%   string containing the space group operators in the same format as used
+%   in the [symmetry.dat] file (for details see [swsym.str]).
+% 
+% `r0`
+% : Atomic position in lattice units in a matrix with dimensions of
+%   $[3\times n_{atom}]$.
+% 
+% `fid`
+% : If non-zero, the symmetry operators will be printed to the file
+%   identified by `fid`, the following values are valid:
+%   * `0`   no printed output (default),
+%   * `1`   standard output (Command Line),
+%   * `fid` text file opened before using `fid = fopen(path)`.
+% 
+% `tol`
+% : Tolerance, distance within two atoms are considered
+%   identical, default value is $10^{-5}$ lattice unit. Necessary to check
+%   for badly defined atomic positions (when atoms are not exactly on the
+%   symmetry element) and to avoid numerical errors.
+% 
+% ### Output Arguments
+% 
+% `r`
+% : All generated atomic positions stored in a matrix with dimensions of
+%   $[3\times n_{genAtom}]$.
 %
-% Output:
+% `aIdx`
+% : The index of the symmetry inequivalent position for every
+%   generated position, stored in a row vector with $n_{genAtom}$ number of
+%   elements.
 %
-% rSym          All generated atomic positions, dimensions are
-%               [3 nGenAtom].
-% aIdx          The index of the symmetry inequivalent position for every
-%               generated position, dimensions are [1 nGenAtom].
-% opInfo        Structure with the following fields:
-%   ismoved         Cell, where each element contains a vector with logical
-%                   value, whether the given operator moved the atom or
-%                   not. Each vector has a dimensions of [1 nSym], where
-%                   the nSym is multiplicity of the general position.
-%   opmove          The rotation operators for every moved atom, dimensions
-%                   are [3 3 nGenAtom].
-%
-% See also SPINW, SWSYM.OPERATOR, SPINW.ATOM, SPINW.MATOM.
+% `opInfo`
+% : Structure with the following fields:
+%   * `ismoved`     Cell, where each element contains a vector with logical
+%                   values, whether the given operator moved the atom or
+%                   not. Each vector has a dimensions of $[1\times n_{sym}]$, where
+%                   the $n_{sym}$ is multiplicity of the general position.
+%   * `opmove`      The rotation operator that moved the original atom the
+%                   equivalent position stored in a matrix with dimensions
+%                   of $[3\times 3\times n_{genAtom}]$.
+% 
+% ### See Also
+% 
+% [swsym.operator]
 %
 
 if nargin == 0
-    help swsym.position
+    swhelp swsym.position
     return
 end
 
@@ -71,7 +101,7 @@ for ii = 1:nAtom
     % corrected for R*pos+T
     rTemp  = permute(mod(mmat(symOp(:,1:3,:),r0(:,ii))+symOp(:,4,:),1),[1 3 2]);
     % take out the overlapping positions, using modulo with tolerance
-    isMoved{ii} = sum(bsxfunsym(@minus,sw_cmod(rTemp,tol),sw_cmod(r0(:,ii),tol)).^2,1) > tol^2;
+    isMoved{ii} = sum(bsxfun(@minus,sw_cmod(rTemp,tol),sw_cmod(r0(:,ii),tol)).^2,1) > tol^2;
     if numel(rTemp) > 3
         % select unique atomic positions and the indices
         [rTemp, idxF] = sw_uniquetol(sw_cmod(rTemp,tol),tol);
@@ -100,5 +130,28 @@ if fid ~= 0
         end
     end
 end
+
+end
+
+function r = sw_cmod(r, tol)
+% modulo one with tolerance
+% 
+% ### Syntax
+% 
+% `r = sw_cmod(r, tol)`
+% 
+% ### Description
+% 
+% `r = sw_cmod(r, tol)` calculates modulo one with tolerance, numbers
+% larger than $1-\epsilon$  $-\epsilon$.
+% 
+% ### See Also
+% 
+% [mod]
+%
+
+r = mod(r,1);
+
+r(r > 1-tol) = r(r > 1-tol)-1;
 
 end

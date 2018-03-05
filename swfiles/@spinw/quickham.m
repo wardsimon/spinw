@@ -1,24 +1,33 @@
 function quickham(obj,J)
-% creates magnetic Hamiltonian with a single command
+% quickly generate magnetic Hamiltonian
+% 
+% ### Syntax
+% 
+% `quickham(obj,J)`
+% 
+% ### Description
+% 
+% `quickham(obj,J)` generates the bonds from the predefined crystal
+% structure and assigns exchange values to bonds such as `J(1)` to first
+% neighbor, `J(2)` for second neighbor etc. The command will erase all
+% previous bonds, anisotropy, g-tensor and matrix definitions. Even if
+% `J(idx) == 0`, the corresponding bond and matrix will be created.
+%  
+% 
+% ### Input Arguments
+% 
+% `obj`
+% : [spinw] object.
+% 
+% `J`
+% : Vector that contains the Heisenberg exchange values. `J(1)` for
+%      first neighbor bonds, etc.
 %
-% QUICKHAM(obj, J)
+% ### See Also
 %
-% The function generates the bonds from the predefined crystal structure
-% and assigns exchange values to bonds such as J(1) to first neighbor, J(2)
-% for second neighbor etc. The command will erase all previous bond,
-% anisotropy, g-tensor and matrix definitions. Even if J(idx) == 0, the
-% corresponding bond and matrix will be created.
+% [spinw.gencoupling] \| [spinw.addcoupling] \| [spinw.matrix] \|
+% [spinw.addmatrix]
 %
-% Input:
-%
-% obj       Spinw object.
-% J         Vector containing the Heisenberg exchange values. J(1) for
-%           first neighbor bonds, etc.
-%
-
-fid = obj.fileid;
-
-obj.fileid(0);
 
 dMax = 8;
 nMax = 0;
@@ -27,14 +36,12 @@ nJ   = numel(J);
 idx = 1;
 % generate the necessary bonds and avoid infinite loop
 while nMax < nJ && idx < 12
-    obj.gencoupling('maxDistance',dMax);
+    obj.gencoupling('maxDistance',dMax,'fid',0);
     dMax = dMax+8;
     % maximum bond index
     nMax = obj.coupling.idx(end);
     idx  = idx+1;
 end
-
-obj.fileid(fid);
 
 if nMax < nJ
     warning('The necessary bond length is too long (d>100 A), not all Js will be assigned!');

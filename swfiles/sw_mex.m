@@ -1,21 +1,31 @@
 function sw_mex(varargin)
-% compiles the mex files and test them
-%
-% SW_MEX('Option1',Value1, ...)
-%
-% The compiled mex files will speed up the spinw.spinwave function. The
+% compiles and tests the mex files
+% 
+% ### Syntax
+% 
+% `sw_mex(Name,Value)`
+% 
+% ### Description
+% 
+% `sw_mex(Name,Value)` compiles and tests the generated mex files. The
+% compiled mex files will speed up the [spinw.spinwave] function. The
 % expected speedup is larger for smaller magnetic unit cells. Once the mex
-% files are compiled, use the swpref.setpref('usemex',true) command to
-% switch to mex in spinw.spinwave.
-%
-% Options:
-%
-% test      If true, the compiled .mex files will be tested. Default is
-%           false.
-% swtest    If true, 3 spin wave calculation will run with and without .mex
-%           files and the results will be compared. Default is false.
-%
-% See also SWPREF.
+% files are compiled, use the `swpref.setpref('usemex',true)` command to
+% switch on using mex files in [spinw.spinwave].
+% 
+% ### Name-Value Pair Arguments
+% 
+% `'test'`
+% : If `true`, the compiled .mex files will be tested. Default is
+%   `false`.
+% 
+% `'swtest'`
+% : If `true`, 3 spin wave calculation will run with and without .mex
+%   files and the results will be compared. Default is `false`.
+% 
+% ### See Also
+% 
+% [swpref]
 %
 
 inpForm.fname  = {'test' 'compile' 'swtest' };
@@ -241,14 +251,13 @@ if param.swtest
     AFsq.addmatrix('label','J2','value',-0.1,'color','green'); AFsq.addcoupling('J2',2)
     AFsq.genmagstr('mode','helical','k',[1/2 1/2 0],'n',[0 0 1], 'S',[1; 0; 0],'nExt',[1 1 1]);
     %plot(AFsq,'range',[2 2 0.5],'zoom',-1)
-    AFsq.fileid(0);
     % Runs test
     hkl = {[1/4 3/4 0] [1/2 1/2 0] [1/2 0 0] [3/4 1/4 0] [1 0 0] [3/2 0 0] 50000};
     nm = 15;   % Ensure same number of slices for all tests
-    tic; linespec_herm_mex      = AFsq.spinwave(hkl,'hermit',true,'useMex',true,'optmem',nm);  t1=toc;
-    tic; linespec_herm_nomex    = AFsq.spinwave(hkl,'hermit',true,'useMex',false,'optmem',nm); t2=toc;
-    tic; linespec_nonherm_mex   = AFsq.spinwave(hkl,'hermit',false,'useMex',true,'optmem',nm); t3=toc;
-    tic; linespec_nonherm_nomex = AFsq.spinwave(hkl,'hermit',false,'useMex',false,'optmem',nm);t4=toc;
+    tic; linespec_herm_mex      = AFsq.spinwave(hkl,'hermit',true,'useMex',true,'optmem',nm,'fid',0);  t1=toc;
+    tic; linespec_herm_nomex    = AFsq.spinwave(hkl,'hermit',true,'useMex',false,'optmem',nm,'fid',0); t2=toc;
+    tic; linespec_nonherm_mex   = AFsq.spinwave(hkl,'hermit',false,'useMex',true,'optmem',nm,'fid',0); t3=toc;
+    tic; linespec_nonherm_nomex = AFsq.spinwave(hkl,'hermit',false,'useMex',false,'optmem',nm,'fid',0);t4=toc;
     
     fprintf('             %16s  %16s  %16s  %16s\n','Hermitian Mex','Hermitian NoMex','NonHermitian Mex','NonHermitian NoMex');
     fprintf('Run Time(s)  % 16.6f  % 16.6f  % 16.6f    % 16.6f\n',t1*5,t2*5,t3*5,t4*5);

@@ -1,78 +1,93 @@
-function out = export(obj, varargin)
-% export data from spinw object into different file formats
+function varargout = export(obj, varargin)
+% export data into file
+% 
+% ### Syntax
+% 
+% `export(obj,Name,Value)`
+% 
+% `outStr = export(obj,Name,Value)`
 %
-% out = EXPORT(obj, 'Option1', Value1, ...)
+% ### Description
+% 
+% `export(obj,Name,Value)` exports different types of spinw object data.
 %
-% Different part of the spinw object data can be exported selected by the
-% 'format' option. Right now the following formats are supported:
+% `outStr = export(obj,Name,Value)` returns a string instead of writing the
+% data into a file.
 %
-% 'pcr'     Creates part of a .pcr file used by FullProf. It exports the
-%           atomic positions.
-% 'spt'     Creates a Jmol script, that reproduce the same plot as used the
-%           built in spinw.plot() function. Any additional parameter of the
-%           spinw.plot() function can be used.
-% 'MC'      Exports a proprietary file format for Monte Carlo simulations.
+% ### Examples
+% 
+% In this example the crystal structure is imported from the `test.cif`
+% file, and the atomic positions are saved into the `test.pcr` file for
+% FullProf refinement (the pcr file needs additional text to work with
+% FullProf).
 %
-%
-% Other general options:
-%
-% path      Path to a file into which the data will be exported, 'out' will
-%           be true if the file succesfully saved, otherwise false.
-% fid       File identifier that is already opened in Matlab using the
-%           fid = fopen() function. 'out' will be the input fid. Don't
-%           forget to close the text file afterwards.
-%
-%
-% Format related options:
-%
-% PCR format:
-% perm      Permutation of the xyz atomic positions, default is [1 2 3].
-%
-% MC format:
-% boundary  Boundary conditions of the extended unit cell.
-%                 'free'  Free, interactions between extedned unit cells are
-%                         omitted.
-%                 'per'   Periodic, interactions between extended unit cells
-%                         are retained.
-%             Default is {'per' 'per' 'per'}.
-%
-% If neither 'path' nor 'fid' is given, the 'out' will be a cell containing
-% strings for each line of the text output.
-%
-% Example:
-%
+% ```
 % cryst = sw('test.cif');
 % cryst.export('format','pcr','path','test.pcr');
+% ```
 %
-% In this example the crystal structure is imported from the test.cif file,
-% and the atomic positions are saved into the test.pcr file for FullProf
-% refinement (the pcr file needs additional text to work with FullProf).
+% ### Input arguments
 %
-% Links:
-% Jmol Wiki: http://wiki.jmol.org/index.php/Main_Page
-% FullProf:  https://www.ill.eu/sites/fullprof
+% `obj`
+% : [spinw] object.
 %
+% ### Name-Value Pair Arguments
+%
+% `'format'`
+% : Determines the output data and file type. The supported file formats
+%   are:
+%   * `'pcr'`   Creates part of a .pcr file used by [FullProf](https://www.ill.eu/sites/fullprof). It exports the
+%     atomic positions.
+%   * `'MC'`    Exports data into a custom file format for Monte Carlo simulations.
+%
+% `'path'`
+% : Path to a file into which the data will be exported, `out` will
+%   be `true` if the file succesfully saved, otherwise `false`.
+%
+% `'fileid'`
+% : File identifier that is already opened in Matlab using the
+%   `fileid = fopen(...)` command. Don't forget to close the file
+%   afterwards.
+%  
+% #### File format dependent options:
+%  
+% `'perm'` (`pcr`)
+% : Permutation of the $xyz$ atomic positions, default value is `[1 2 3]`.
+%  
+% `'boundary'` (`MC`)
+% : Boundary conditions of the extended unit cell. Default value is `{'per'
+%   'per' 'per'}`. The following strings are accepted:
+%   * `'free'`  Free, interactions between extedned unit cells are omitted.
+%   * `'per'`   Periodic, interactions between extended unit cells are
+%     retained.
+%  
+% {{note If neither `path` nor `fileid` is given, the `outStr` will be a
+% cell containing strings for each line of the text output.}}
+%  
 
-inpForm.fname  = {'format' 'path' 'fid' 'perm'  'boundary'          };
-inpForm.defval = {''       ''      []   [1 2 3] {'per' 'per' 'per'} };
-inpForm.size   = {[1 -1]   [1 -2] [1 1] [1 3]   [1 3]               };
-inpForm.soft   = {true     true    true false   false               };
+inpForm.fname  = {'format' 'path' 'fileid' 'perm'  'boundary'          };
+inpForm.defval = {''       ''      []      [1 2 3] {'per' 'per' 'per'} };
+inpForm.size   = {[1 -1]   [1 -2] [1 1]    [1 3]   [1 3]               };
+inpForm.soft   = {true     true    true    false   false               };
 
 warnState = warning('off','sw_readparam:UnreadInput');
 param = sw_readparam(inpForm, varargin{:});
 warning(warnState);
 
 % produce the requested output
-if isempty(param.path) && isempty(param.fid)
+if isempty(param.path) && isempty(param.fileid) && nargout == 0
     % dialog to get a filename
     [fName, fDir] = uiputfile({'*.pcr','FullProf file (*.pcr)';'*.spt','Jmol script (*.spt)';'*.*' 'All Files (*.*)'}, 'Select an output filename');
     param.path = [fDir fName];
+    if ~any(isempty(param.path))
+        warning('spinw:export:NoInput','No file is given, no output is produced!');
+        return
+    end
     if isempty(param.format)
         [~,~,fExt] = fileparts(param.path);
         param.format = fExt(2:end);
     end
 end
-
 
 switch param.format
     case 'pcr'
@@ -96,35 +111,32 @@ switch param.format
         
     case ''
         warning('spinw:export:NoInput','No ''format'' option was given, no output is produced!');
-        out = [];
-        return
+        if nargout > 0
+            varargout{1} = {};
+            return
+        end
     otherwise
         error('spinw:export:WrongInput','''format'' has to be one of the strings given in the help!');
 end
 
-% write into fid file
-if ~isempty(param.fid)
-    fprintf(param.fid,outStr);
-    out = param.fid;
-    return
+if nargout > 0
+    varargout{1} = outStr;
 end
 
-% save into path file
-if ~isempty(param.path)
+% write into fid file
+if ~isempty(param.fileid)
+    fprintf(param.fileid,outStr);
+elseif ~isempty(param.path)
     try
-        fid = fopen(param.path,'w');
-        fprintf(fid,outStr);
-        fclose(fid);
-        out = true;
+        fileid = fopen(param.path,'w');
+        fprintf(fileid,outStr);
+        fclose(fileid);
     catch
         % file couldn't be saved
-        out = false;
+        error('spinw:export:UnableToOpenFile','Cannot write into file ''%s''!',param.path)
     end
     return
 end
-
-% provide string output
-out = outStr;
 
 end
 
@@ -154,14 +166,20 @@ uc = obj.unit_cell;
 % aname: name of atom (e.g. 'Cr')
 % alabel: label if given (eg' 'MCr3'), otherwise the same as the name of
 % the atom
-uc.aname = cell(1,nAtom);
+aDat = sw_atomdata(uc.Z);
+
+uc.aname  = {aDat.name};
 uc.alabel = cell(1,nAtom);
 
 for ii = 1:nAtom
     lTemp = strword(uc.label{ii},[1 2],true);
     uc.alabel{ii} = lTemp{1};
-    uc.aname{ii} = lTemp{2};
+    % generate the atom name + oxydation state
+    %uc.aname{ii} = lTemp{2};
+    
+    uc.aname{ii} = sprintf('%s%+1d',uc.aname{ii},uc.ox(ii));
 end
+
 
 % find unique labels for atoms
 for ii = 1:nAtom

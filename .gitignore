@@ -1,10 +1,14 @@
-docs/_build/
+
 *.mat
+!icons.mat
 
 .DS_Store
 
 *.m~
 
-external/tensordot.m~
+docs/_site/
+docs/.sass-cache/
+.jekyll-metadata
+_pdf
 
-*.log
+*.sublime-workspace

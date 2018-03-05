@@ -1,67 +1,81 @@
-% The SWPLOT library contains functions that can create and control plot of
-% 3D objects. It contains low level function to plot specific shapes on any
-% figure (cylinder, line, arrow, ellipsoid, text) that are vectorized.
-% Moreover it provides the plot command to plot multiple objects with
-% specified color, transparency, label and legend on the swplot figure that
-% has rotation and translations built in that are better than the default
-% 3D rotation with mouse in Matlab. Moreover it has high level commands to
-% plot crystals from SpinW objects (plotatom, plotmag, plotion, plotbond,
-% plotbase, plotcell, plotchem).
+% package for 3D plotting
 %
-% Files
+% The package contains functions that can create and control plotting of 3D
+% objects. It contains low level functions to plot specific shapes on any
+% figure (cylinder, line, arrow, ellipsoid, polyhedron, sphere, text) that
+% are vectorized for fast plotting of multiple objects using a single
+% [matlab:patch] command. Moreover it provides the [swplot.plot] command to
+% plot multiple objects with specific color, transparency, label and legend
+% on the swplot figure including tha ability for smooth rotation and
+% translations via the mouse (that are much better than the default 3D
+% rotation with mouse in Matlab). Moreover it has high level commands to
+% plot crystals from SpinW objects (`swplot.plot...` commands).
 %
-% Vectorized plotting of basic 3D geometrical objects using the patch
-% command and triangular patches:
+% ### Files
 %
-%   arrow           - draws a 3D arrow using patch
-%   circle          - creates a circle surface in 3 dimensions
-%   cylinder        - draws a closed/open 3D cylinder
-%   ellipsoid       - draw ellipsoid
-%   line            - draws a 3D line using patch
-%   polyhedron      - draw convex polyhedra or polynom from vertex list
-%   text            - draws a text at a point in 3D
+% #### Basic 3D objects
 %
-% Creating and modifying swplot figure:
+% Plots primitive geometrical shapes, able to plot multiple objects when
+% input is vectorized. Can give considerable speedup because a single patch
+% command is used to plot multiple shapes.
 %
-%   activefigure    - returns the handle of the active swplot figure
-%   add             - adds a graphical object to the hgtransform of an swplot figure
-%   base            - sets the basis vectors of an swplot figure
-%   clear           - clear swplot figure
-%   close           - close swplot figure
-%   delete          - deletes objects and their data on swplot figure
-%   export          - exports swplot figure into raster/vector image
-%   figure          - creates swplot figure
-%   findobj         - finds object data on swplot figure
-%   getdata         - gets the data stored in an swplot figure
-%   ishg            - does the swplot figure uses hgtransform
-%   legend          - draws legend to the swplot figure
-%   mouse           - adds mouse callbacks to swplot figure
-%   plot            - plots objects to swplot figure
-%   tooltip         - creates tooltip axis on swplot figure
-%   transform       - transform objects on swplot figure
-%   translate       - translate objects on swplot figure
-%   view            - control 3D view of swplot
-%   zoom            - zooming objects on swplot figure
+%   swplot.arrow     
+%   swplot.circle    
+%   swplot.cylinder  
+%   swplot.ellipsoid 
+%   swplot.line      
+%   swplot.polyhedron
+%   swplot.text      
 %
-% Plotting SpinW object on swplot figure:
+% #### Creating and modifying swplot figure
 %
-%   plotatom        - plots crystal structure
-%   plotbase        - plots the edges of unit cells on swplot figure
-%   plotbond        - plots magnetic bonds
-%   plotcell        - plots the edges of unit cells on swplot figure
-%   plotchem        - plots polyhedra or chemical bonds
-%   plotion         - plots magnetic ion properties
-%   plotmag         - plots magnetic structure
+% These functions provide complete control over the transformations,
+% objects on an swplot figure. These are the alternatives to the Matlab
+% built in commands that control 3D plot axes. The advantage here is the
+% smooth mouse rotation/zoom functionality, nice legend and ability to
+% assign a tooltip text to any object that is triggered by a mouse click on
+% the object.
 %
-% Other related functions:
+%   swplot.activefigure
+%   swplot.add         
+%   swplot.base        
+%   swplot.clear       
+%   swplot.close       
+%   swplot.delete      
+%   swplot.export      
+%   swplot.figure      
+%   swplot.findobj     
+%   swplot.getdata     
+%   swplot.legend      
+%   swplot.mouse       
+%   swplot.plot        
+%   swplot.tooltip     
+%   swplot.transform   
+%   swplot.translate   
+%   swplot.view        
+%   swplot.zoom        
 %
-%   color           - generates RGB code from color name string
-%   icomesh         - creates mesh by subdividing icosahedron faces
-%   logo            - creates the logo of SpinW and saves to a .png file
-%   patchfacefcn    - callback function for patch face selection
-%   raytriangle     - finds if a ray crosses a triangle
-%   setrangegui     - shows a window to change the plotting range of an swplot figure
-%   subfigure       - changes position of figure window on the screen
-%   tooltipcallback - call tooltip on clicking an object on an swplot figure
-%   tooltipstring   - generate tooltip string from the data of a graphical object
+% #### Plotting SpinW object on swplot figure
+%
+% These high level plot commands are used to plot different types of data
+% that is stored in the [spinw] object. All inputs of these commands can be
+% controlled from the [spinw.plot] command.
+%
+%   swplot.plotatom
+%   swplot.plotbase
+%   swplot.plotbond
+%   swplot.plotcell
+%   swplot.plotchem
+%   swplot.plotion 
+%   swplot.plotmag 
+%
+% #### Related functions
+%
+% Helper function that can be also used as standalone.
+%
+%   swplot.color          
+%   swplot.icomesh        
+%   swplot.logo           
+%   swplot.subfigure
+%   swplot.subplot
 %

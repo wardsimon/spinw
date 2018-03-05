@@ -1,30 +1,40 @@
 function varargout = formula(obj)
-% returns chemical formula, mass, volume, etc.
+% returns basic physical properties
 %
-% formula = FORMULA(obj)
+% ### Syntax
 %
-% Options:
+% `formula = formula(obj)`
 %
-% obj       spinw class object.
+% ### Description
 %
-% Output:
+% `result = formula(obj)` returns chemical mass, density, cellvolume etc.
+% of `obj`.
 %
-% formula struct variable with the following fields:
+% ### Examples
 %
-% m             Mass of the unit cell in g/mol unit.
-% V             Volume of the unit cell in Angstrom^3 unit.
-% rho           Density in g/cm^3 unit.
-% chemlabel     List of the different elements.
-% chemnum       Number of the listed element names
-% chemform      Chemical formula string: series of 'ChemLabel_ChemNum '.
+% The formula of the crystal stored in the
+% [https://goo.gl/do6oTh](https://goo.gl/do6oTh) linked file will be
+% printed onto the Command Window.
 %
-% Example:
+% ```
+% >>cryst = spinw('https://goo.gl/do6oTh')
+% >>cryst.formula>>
+% ```
 %
-% cryst = spinw('https://goo.gl/do6oTh')
-% cryst.formula
+% ### Name-Value Pair Arguments
 %
-% The formula of the crystal stored in the test.cif file will be printed
-% onto the Command Window.
+% `'obj'`
+% : [spinw] object.
+%
+% ### Output Arguments
+%
+% `formula` struct variable with the following fields:
+% * `m`         Mass of the unit cell in g/mol units.
+% * `V`         Calculated volume of the unit cell in length units (defined in [spinw.unit]).
+% * `rho`       Density in g/cm$^3$.
+% * `chemlabel` List of the different elements.
+% * `chemnum`   Number of the listed element names
+% * `chemform`  Chemical formula string.
 %
 
 atom = obj.atom;
@@ -51,7 +61,7 @@ else
     % only keep if all atoms are found
     if all(iFound)
         m = iso.m(loc).*occ;
-    end 
+    end
 end
 
 % aVogadro number (1/mol)
@@ -85,8 +95,8 @@ formula.N = nForm;
 formula.m = sum(m)/nForm;
 % cell volume in Angstrom^3
 formula.V = det(obj.basisvector);
-% density in g/cm^3
-formula.rho = formula.m/formula.V/nA*1e24*nForm;
+% density in g/cm^3 convert volume to A^3
+formula.rho = formula.m/(formula.V*sw_converter(1,obj.unit.label{1},symbol('a'))^3)/nA*1e24*nForm;
 
 % divide the number of atoms in formula
 numAtom(2:2:end) = num2cell([numAtom{2:2:end}]/nForm);
@@ -100,11 +110,13 @@ if nargout > 0
 end
 
 if nargout == 0
-    fprintf('     <strong>Chemical formula:</strong>  %s\n',formula.chemform);
-    fprintf('     <strong>Formula mass:</strong>      %8.3f g/mol\n',formula.m);
-    fprintf('     <strong>Formula in cell:</strong>   %8d units\n',formula.N);
-    fprintf('     <strong>Cell volume:</strong>       %8.3f Angstrom^3\n',formula.V);
-    fprintf('     <strong>Density:</strong>           %8.3f g/cm^3\n',formula.rho);
+    str = [...
+        sprintf('     `Chemical formula:`  %s\n',formula.chemform)...
+        sprintf('     `Formula mass:`      %8.3f g/mol\n',formula.m)...
+        sprintf('     `Formula in cell:`   %8d units\n',formula.N)...
+        sprintf('     `Cell volume:`       %8.3f %s\\\\^3\n',formula.V,obj.unit.label{1})...
+        sprintf('     `Density:`           %8.3f g/cm\\\\^3\n',formula.rho)];
+    fprintf(sw_markdown(str));
 end
 
 end

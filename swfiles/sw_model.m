@@ -1,44 +1,56 @@
 function obj = sw_model(model, param, fid)
-% creates different predefined spin models
-%
-% obj = SW_MODEL(model, param, {fid})
-%
-% Input:
-%
-% model     String, name of the model, one of the following:
-%               'triAF'     Triangular lattice Heisenberg antiferromagnet
-%                           in the ab plane (a=b=3 Angstrom), with gamma =
-%                           120 deg angle and optimised magnetic structure.
-%                           Arbitrary number of Heisenberg interaction can
-%                           be defined, param(1) gives the value of 1st
-%                           neighbor interaction, param(2) the second etc.
-%               'squareAF'  Square lattice antiferromagnet.
-%               'chain'     Chain with further neighbor interactions.
-%
-% param     Input parameters of the model, depending on which is selected.
-% fid       Where to print the text output. Default is 1 to print to the
-%           Command Window. Optional.
-%
-% Output:
-%
-% obj       spinw class object with the selected model.
-%
-% See also SPINW.
+% creates predefined spin models
+% 
+% ### Syntax
+% 
+% `obj = sw_model(model, param)`
+% 
+% ### Description
+% 
+% `obj = sw_model(model, param)` generates spin models, such as triangular
+% lattice antiferromagnet, square lattice, etc. It also generates the
+% magnetic ground state. For each lattice arbitrary number of further
+% neighbor bonds can be defined using a vector of exchange values.
+% 
+% ### Input Arguments
+% 
+% `model`
+% : String, name of the model, one of the following:
+%   * `'triAF'`     Triangular lattice Heisenberg antiferromagnet
+%                   in the $ab$ plane ($a=b=3$ \\ang), with \\gamma =
+%                   120\\deg angle and optimised magnetic structure.
+%   * `'squareAF'`  Square lattice antiferromagnet.
+%   * `'chain'`     Chain with further neighbor interactions.
+% 
+% `param`
+% : Input parameters of the model, row vector which gives the values of the
+%   Heisenberg exchange for first, second, thirs etc. neighbor bonds stored
+%   in `p(1)`, `p(2)`, `p(3)`, etc. respectively.
+% 
+% ### Output Arguments
+% 
+% `obj`
+% : [spinw] class object with the selected model.
+% 
+% ### See Also
+% 
+% [spinw]
 %
 
 if nargin == 0
-    help sw_model
+    swhelp sw_model
     return
 end
 
+pref = swpref;
+
 if nargin < 3
-    fid = swpref.getpref('fid',true);
+    fid = pref.fid;
 end
 
 fprintf0(fid,'Preparing ''%s'' model ...\n',model);
 
 obj = spinw;
-fileid(obj,fid)
 
 switch model
     case 'triAF'

@@ -1,23 +1,33 @@
 function obj = sw_import(fName, toPlot, obj0)
 % create SpinW object from .cif and FullProf Studio .fst files
+% 
+% ### Syntax
+% 
+% `obj = sw_import(fname, {toplot})`
+% 
+% ### Description
+% 
+% `obj = sw_import(fname, {toplot})` can import Crystallographic
+% Information Framework (.cif) files or FullProf Studio (.fst) files. It is
+% also able to read .cif files from a web link. 
+% 
+% ### Input Arguments
+% 
+% `fName`
+% : String that contains the location of the source file, e.g. the full
+%   path to the file or a web address.
+% 
+% `toPlot`
+% : If `true` the imported structure will be plotted, default value is
+%   `false`.
 %
-% At present the function can import Crystallographic Information Framework
-% (.cif) files or FullProf Studio (.fst) files. It is able to read .cif
-% files from a web link.
-%
-% obj = SW_IMPORT(fName, {toPlot})
-%
-% Input:
-%
-% fName     String, contain the file location and name of the .fst file.
-% toPlot    If true the structure will be plotted, default is false.
-%
-
 
 if nargin == 0
-    help sw_import
+    swhelp sw_import
     return
 end
+pref = swpref;
+fid = pref.fid;
 
 if nargin < 2
     toPlot = false;
@@ -190,7 +200,7 @@ switch fExt
         end
 end
 
-fprintf0(obj0.fileid,'Crystal structure is imported from %s.\n',fName);
+fprintf0(fid,'Crystal structure is imported from %s.\n',fName);
 
 if nargout > 0
     obj = obj0;

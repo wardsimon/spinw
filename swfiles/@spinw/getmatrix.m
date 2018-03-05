@@ -1,90 +1,135 @@
 function [aMatOut, paramOut, pOpOut] = getmatrix(obj, varargin)
-% gives the symmetry allowed matrices for a given coupling or anisotropy
+% determines the symmetry allowed tensor elements
+% 
+% ### Syntax
+% 
+% `amat = getmatrix(obj,Name,Value)`
+% 
+% ### Description
+% 
+% `amat = getmatrix(obj,Name,Value)` determines the symmetry allowed
+% elements of the exchange, single-ion anistropy and g-tensor. For bonds,
+% the code first determines the point group symmetry on the center of the
+% bond and calculates the allowed eelements of the exchange tensor
+% accordingly. For anisotropy and g-tensor, the point group symmetry of the
+% selected atom is considered. For example the code can correctly calculate
+% the allowed Dzyaloshinskii-Moriya vectors.
+% 
+% ### Examples
+% 
+% To following code will determine the allowed anisotropy matrix elements
+% in the $C4$ point group (the symmetry at the $(0,0,0)$ atomic position).
+% The allowed matrix elements will be `diag([A A B])`:
 %
-% aMat = GETMATRIX(obj, 'Option1', Value1, ...)
+% ```
+% >>cryst = spinw
+% >>cryst.genlattice('sym','P 4')
+% >>cryst.addatom('r',[0 0 0],'label','MCu2')
+% >>cryst.addmatrix('label','A','value',1)
+% >>cryst.gencoupling
+% >>cryst.addaniso('A')
+% >>cryst.getmatrix('mat','A')>>
+% ```
+% 
+% ### Input Arguments
+% 
+% `obj`
+% : [spinw] object.
+% 
+% ### Name-Value Pair Arguments
 %
-% Input:
-%
-% obj           spinw class object.
-%
-% Options:
-%
-% One of the following options has to be given in the input:
-%
-% mat           Label or index of the matrix that is already assigned to
-%               a bond, anisotropy or g-tensor.
-% bond          Index of the bond in spinw.coupling.idx.
-% subIdx        Selects a certain bond, within efault value is 1.
-% aniso         Label or index of the magnetic atom that has a single ion
-%               anisotropy matrix is assigned.
-% gtensor       Label or index of the magnetic atom that has a g-tensor is 
-%               assigned.
+% At least one of the following option has to be defined:
+% 
+% `mat`
+% : Label or index of a matrix that is already assigned to
+%   a bond, anisotropy or g-tensor, e.g. `J1`.
+% 
+% `bond`
+% : Index of the bond in `spinw.coupling.idx`, e.g. 1 for first neighbor
+%   bonds.
+% 
+% `aniso`
+% : Label or index of the magnetic atom that has a single ion
+%   anisotropy matrix is assigned, e.g. `Cr1` if `Cr1` is a magnetic atom.
+% 
+% `gtensor`
+% : Label or index of the magnetic atom that has a g-tensor is 
+%   assigned.
 %
 % Optional inputs:
+% 
+% `subIdx`
+% : Selects a certain bond, within equivalent bonds. Default value is 1.
 %
-% tol       Tolerance for printing the output for the smallest matrix
-%           element.    
-% pref      Defines prefactors as a vector for the symmetry allowed
-%           components, dimensions are [1 nSymMat]. Alternatively, if only
-%           a few of the symmetry allowed matrices have non-zero
-%           prefactors, use:
-%               {[6 0.1 5 0.25]}
-%           This means, the 6th symmetry allowed matrix have prefactor 0.1,
-%           the 5th symmetry allowed matrix have prefactor 0.25. Since
-%           Heisenberg isotropic couplings are always allowed, a cell with
-%           a single element will create a Heisenberg coupling, example:
-%               {0.1}
-%           This is identical to obj.matrix.mat = eye(3)*0.1
-%           For DM interactions (antisymmetric coupling matrices), use
-%           three element vector in the cell:
-%               {[D1 D2 D3]}
-%           In this case, these will be the prefactors of the 3
-%           antisymmetric symmetry allowed matrices. In case no crystal
-%           symmetry is defined, these will define directly the components
-%           of the  DM interaction in the xyz coordinate system. Be
-%           carefull with the sign of the DM interaction, it depends on the
-%           order of the two interacting atoms! Default value is {1}.
-%           For anisotropy matrices antisymmetric matrices are not allowed.
+% `tol`
+% : Tolerance for printing the output for the smallest matrix
+%   element.
+% 
+% `pref`
+% : If defined `amat` will contain a single $[3\times 3]$ matrix by
+%   multuplying the calculated tensor components with the given prefactors.
+%   Thus `pref` should contain the same number of elements as the number of
+%   symmetry allowed tensor components. Alternatively, if only a few of the
+%   symmetry allowed matrices have non-zero prefactors, use e.g. 
+%   `{[6 0.1 5 0.25]}` which means, the 6th symmetry allowed matrix have
+%   prefactor 0.1, the 5th symmetry allowed matrix have prefactor 0.25.
+%   Since Heisenberg isotropic couplings are always allowed, a cell with a
+%   single element will create a Heisenberg coupling, e.g. `{0.1}`, which is
+%   identical to `obj.matrix.mat = eye(3)*0.1`. For Dzyaloshinskii-Moriya
+%   interactions (antisymmetric exchange matrices), use a three element
+%   vector in a cell, e.g. `pref = {[D1 D2 D3]}`. In this case, these will
+%   be the prefactors of the 3 antisymmetric allowed matrices. In
+%   case no crystal symmetry is defined, these will define directly the
+%   components of the  Dzyaloshinskii-Moriya interaction in the xyz
+%   coordinate system.
 %
-% Output:
+%   {{note Be carefull with the sign of the Dzyaloshinskii-Moriya
+%   interaction, it depends on the counting order of the two interacting
+%   atoms! For single-ion anisotropy and g-tensor antisymmetric matrices
+%   are forbidden in any symmetry.}}
+% 
+% `'fid'`
+% : Defines whether to provide text output. The default value is determined
+%   by the `fid` preference stored in [swpref]. The possible values are:
+%   * `0`   No text output is generated.
+%   * `1`   Text output in the MATLAB Command Window.
+%   * `fid` File ID provided by the `fopen` command, the output is written
+%           into the opened file stream.
 %
-% aMat      If no prefactors are defined, aMat contains all symmetry
-%           allowed elements of the coupling/anisotropy matrix, dimensions
-%           are [3 3 nSymMat]. If prefactor is defined, it is a single 3x3
-%           matrix, that is a sum of all symmetry allowed elemenets
-%           multiplied by the given prefactors.
-%
-% Example:
-%
-% cryst = spinw;
-% cryst.genlattice('sym','P 4')
-% cryst.addatom('r',[0 0 0],'label','MCu2')
-% cryst.addmatrix('label','A','value',eye(3))
-% cryst.gencoupling
-% cryst.addaniso('A')
-% cryst.getmatrix('mat','A');
-%
-% The above example determines the allowed anisotropy matrix elements in
-% the C4 point group symmetry (the symmetry at the [0 0 0] atomic
-% position) and prints them onto the Command Window. The allowed matrix
-% elements are: diag([A A B]).
-%
-% See also SPINW.SETMATRIX.
+% ### Output Arguments
+% 
+% `aMat`
+% : If no prefactors are defined, `aMat` contains all symmetry
+%   allowed elements of the selected tensor, dimensions are $[3\times 3\times n_{symmat}]$.
+%   If a prefactor is defined, it is a single $[3\times 3]$ matrix, that is
+%   a sum of all symmetry allowed elemenets multiplied by the given
+%   prefactors.
+% 
+% ### See Also
+% 
+% [spinw.setmatrix]
 %
 
-inpForm.fname  = {'mat'      'aniso' 'bond' 'tol' 'pref' 'gtensor' 'subIdx' };
-inpForm.defval = {zeros(1,0) 0       0       1e-5  []     0        1        };
-inpForm.size   = {[1 -1]     [1 -2]  [1 1]   [1 1] [1 -2] [1 -3]   [1 1]    };
-inpForm.soft   = {false      false   false   false true   false    false    };
+inpForm.fname  = {'mat'      'aniso' 'bond' 'tol' 'pref' 'gtensor' 'subIdx' 'fid'};
+inpForm.defval = {zeros(1,0) 0       0       1e-5  []     0        1        -1   };
+inpForm.size   = {[1 -1]     [1 -2]  [1 1]   [1 1] [1 -2] [1 -3]   [1 1]    [1 1]};
+inpForm.soft   = {false      false   false   false true   false    false    false};
 
 param0 = sw_readparam(inpForm, varargin{:});
+pref = swpref;
 param  = param0;
 
 tol = param.tol;
 
 if nargin == 1
-    help spinw.getmatrix
+    swhelp spinw.getmatrix
     return
+end
+
+if param.fid == -1
+    fid = pref.fid;
+else
+    fid = param.fid;
 end
 
 if ~obj.symmetry
@@ -94,7 +139,11 @@ if ~obj.symmetry
         paramOut = [];
         pOpOut   = zeros(3,3,0);
     end
-    warning('spinw:getmatrix:NoSymmetry','The SpinW object does not contain symmetry!')
+    if isempty(obj.lattice.sym)
+        warning('spinw:getmatrix:NoSymmetry','The SpinW object does not contain symmetry!')
+    else
+        warning('spinw:getmatrix:NoSymmetry','Use spinw.gencoupling first to generate bonds!')
+    end
     return
 end
     
@@ -175,7 +224,12 @@ if bondIdx ~= 0
     if isempty(iSel)
         error('spinw:getmatrix:WrongInput','The given bond index does not existst, check your input!');
     end
-
+    
+    
+    if param.subIdx>numel(iSel)
+        error('spinw:getmatrix:WrongInput','The given subIdx reaches the number of bonds within the given symmetry (%d)!',numel(iSel));
+    end
+    
     if param.subIdx ~=1
         iSel = iSel(param.subIdx);
     end
@@ -224,7 +278,7 @@ else
     
 end
 
-if matIdx ~= 0
+if ~isempty(matIdx) && (matIdx ~= 0)
     % determine the label of the matrix
     param.mat = obj.matrix.label{matIdx};
 end
@@ -255,16 +309,14 @@ nSymMat = size(aMat,3);
 
 % convert aMat in case subIdx is non-zero for coupling matrices
 mod_mat = false;
-if param.subIdx > 1 && anisoIdx == 0 && gIdx == 0
+if param.subIdx > 1 && anisoIdx == 0 && gIdx == 0 && ~isempty(matIdx)
     mod_mat = true;
     % get the matrices for the first bond
     % TODO use cache.symop
     param0.subIdx = 1;
     param0.pref   = [];
-    f0 = obj.fileid;
-    obj.fileid(0);
+    param0.fid    = 0;
     aMat0 = obj.getmatrix(param0);
-    obj.fileid(f0);
     
     % save the original matrix of the object
     mat0 = obj.matrix.mat(:,:,matIdx);
@@ -373,7 +425,7 @@ if nargout == 0
         for jj = 1:3
             smatStr = [smatStr eStr{ii,jj} '|'];
         end
-        smatStr = [smatStr sprintf('\n')];
+        smatStr = [smatStr sprintf('\n')]; %#ok<SPRINTFN>
     end
     
     % strings for each element in the asymmetric matrix
@@ -428,30 +480,30 @@ if nargout == 0
     
     % print the answer
     if bondIdx
-        fprintf('\nThe symmetry analysis of the coupling between atom %d and atom %d:\n',atom1(1),atom2(1));
-        fprintf(' lattice translation vector: [%d,%d,%d]\n',dl(:,1));
-        fprintf(' distance: %5.3f Angstrom\n',norm(obj.basisvector*dr(:,1)));
-        fprintf(' center of bond (in lattice units): [%5.3f,%5.3f,%5.3f]\n', center(:,1));
+        fprintf0(fid,'\nThe symmetry analysis of the coupling between atom %d and atom %d:\n',atom1(1),atom2(1));
+        fprintf0(fid,' lattice translation vector: [%d,%d,%d]\n',dl(:,1));
+        fprintf0(fid,' distance: %5.3f Angstrom\n',norm(obj.basisvector*dr(:,1)));
+        fprintf0(fid,' center of bond (in lattice units): [%5.3f,%5.3f,%5.3f]\n', center(:,1));
     elseif anisoIdx
-        fprintf('\nThe symmetry analysis of the anisotropy matrix of atom %d (''%s''):\n',anisoIdx,obj.unit_cell.label{anisoIdx});
-        fprintf(' position (in lattice units): [%5.3f,%5.3f,%5.3f]\n', center(:,1));
+        fprintf0(fid,'\nThe symmetry analysis of the anisotropy matrix of atom %d (''%s''):\n',anisoIdx,obj.unit_cell.label{anisoIdx});
+        fprintf0(fid,' position (in lattice units): [%5.3f,%5.3f,%5.3f]\n', center(:,1));
     else
-        fprintf('\nThe symmetry analysis of the g-tensor of atom %d (''%s''):\n',gIdx,obj.unit_cell.label{gIdx});
-        fprintf(' position (in lattice units): [%5.3f,%5.3f,%5.3f]\n', center(:,1));        
+        fprintf0(fid,'\nThe symmetry analysis of the g-tensor of atom %d (''%s''):\n',gIdx,obj.unit_cell.label{gIdx});
+        fprintf0(fid,' position (in lattice units): [%5.3f,%5.3f,%5.3f]\n', center(:,1));        
     end
     if ~isempty(param.mat)
-        fprintf(' label of the assigned matrix: ''%s''\n',param.mat);
+        fprintf0(fid,' label of the assigned matrix: ''%s''\n',param.mat);
     end
     
-    fprintf(' allowed elements in the symmetric matrix:\n');
-    fprintf('  S = %s\n',smatStr);
+    fprintf0(fid,' allowed elements in the symmetric matrix:\n');
+    fprintf0(fid,'  S = %s\n',smatStr);
     if bondIdx
-        fprintf(' allowed components of the Dzyaloshinskii-Moriya vector:\n');
-        fprintf('  D = %s\n\n',amatStr);
+        fprintf0(fid,' allowed components of the Dzyaloshinskii-Moriya vector:\n');
+        fprintf0(fid,'  D = %s\n\n',amatStr);
     end
     
     if mod_mat
-        fprintf('Be carefull, the output matrices are corresponding to subIdx = 1!\n');
+        fprintf0(fid,'Be carefull, the output matrices are corresponding to subIdx = 1!\n');
     end
 end
 

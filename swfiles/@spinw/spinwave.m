@@ -1,168 +1,238 @@
 function spectra = spinwave(obj, hkl, varargin)
-% calculates dynamical spin-spin correlation function using linear spin wave theory
+% calculates spin correlation function using linear spin wave theory
 %
-% spectra = SPINWAVE(obj, hkl, 'option1', value1 ...)
+% ### Syntax
 %
-% Spin wave dispersion and spin-spin correlation function is calculated at
-% the reciprocal space points k. The function can deal with arbitrary
-% magnetic structure and magnetic interactions as well as single ion
-% anisotropy and magnetic field. Biquadratic exchange interactions are also
-% implemented, however only for k=0 magnetic structures.
+% `spectra = spinwave(obj,Q)`
+%
+% `spectra = spinwave(___,Name,Value)`
+%
+% ### Description
+%
+% `spinwave(obj,Q,Name,Value)` calculates spin wave dispersion and
+% spin-spin correlation function at the reciprocal space points $Q$. The
+% function can solve any single-k magnetic structure exactly and any
+% multi-k magnetic structure appoximately and quadratic spinw-spin
+% interactions as well as single ion anisotropy and magnetic field.
+% Biquadratic exchange interactions are also implemented, however only for
+% $k_m=0$ magnetic structures.
 %
 % If the magnetic ordering wavevector is non-integer, the dispersion is
-% calculated using a coordinate system rotating from cell to cell. In this
-% case the spin Hamiltonian has to fulfill this extra rotational symmetry.
+% calculated using a coordinate system rotating from unit cell to unit
+% cell. In this case the spin Hamiltonian has to fulfill this extra
+% rotational symmetry which is not checked programatically.
 %
-% Some of the code of the function can run faster is mex files are used. To
-% switch on mex files, use the swpref.setpref('usemex',true) command. For
-% details see the <a href="matlab:help('sw_mex.m')">sw_mex</a> function.
+% Some of the code of the function can run faster if mex files are used. To
+% switch on mex files, use the `swpref.setpref('usemex',true)` command. For
+% details see the [sw_mex] and [swpref.setpref] functions.
 %
+% ### Examples
 %
-% Input:
+% To calculate and plot the spin wave dispersion of the
+% triangular lattice antiferromagnet ($S=1$, $J=1$) along the $(h,h,0)$
+% direction in reciprocal space we create the built in triangular lattice
+% model using `sw_model`.
 %
-% obj           Input structure, spinw class object.
-% hkl           Defines the Q points where the spectra is calculated, in
-%               reciprocal lattice units, size is [3 nHkl]. Q can be also
-%               defined by several linear scan in reciprocal space. In this
-%               case hkl is cell type, where each element of the cell
-%               defines a point in Q space. Linear scans are assumed
-%               between consecutive points. Also the number of Q points can
-%               be specified as a last element, it is 100 by defaults. For
-%               example: hkl = {[0 0 0] [1 0 0]  50}, defines a scan along
-%               (h,0,0) from 0 to 1 and 50 Q points are calculated along
-%               the scan.
+% ```
+% >>tri = sw_model('triAF',1)
+% >>spec = tri.spinwave({[0 0 0] [1 1 0]})
+% >>sw_plotspec(spec)
+% >>snapnow
+% ```
+% 
+% ### Input Arguments
 %
-%               For symbolic calculation at a general reciprocal space
-%               point use sym class input. For example to calculate the
-%               spectrum along (h,0,0): hkl = [sym('h') 0 0]. To
-%               do calculation at a specific point do for example
-%               sym([0 1 0]), to calculate the spectrum at (0,1,0).
+% `obj`
+% : [spinw] object.
+% 
+% `Q`
+% : Defines the $Q$ points where the spectra is calculated, in reciprocal
+%   lattice units, size is $[3\times n_{Q}]$. $Q$ can be also defined by
+%   several linear scan in reciprocal space. In this case `Q` is cell type,
+%   where each element of the cell defines a point in $Q$ space. Linear scans
+%   are assumed between consecutive points. Also the number of $Q$ points can
+%   be specified as a last element, it is 100 by defaults. 
+%   
+%   For example to define a scan along $(h,0,0)$ from $h=0$ to $h=1$ using
+%   200 $Q$ points the following input should be used:
+%   ```
+%   Q = {[0 0 0] [1 0 0]  50}
+%   ```
 %
-% Options:
+%   For symbolic calculation at a general reciprocal space point use `sym`
+%   type input. 
 %
-% formfact      If true, the magnetic form factor is included in the
-%               spin-spin correlation function calculation. The form factor
-%               coefficients are stored in obj.unit_cell.ff(1,:,atomIndex).
-%               Default value is false.
-% formfactfun   Function that calculates the magnetic form factor for given
-%               Q value. Default value is @sw_mff(), that uses a tabulated
-%               coefficients for the form factor calculation. For
-%               anisotropic form factors a user defined function can be
-%               written that has the following header:
-%                   F = @formfactfun(atomLabel,Q)
-%               where the parameters are:
-%                   F   row vector containing the form factor for every
-%                       input Q value
-%                   atomLabel string, label of the selected magnetic atom
-%                   Q   matrix with dimensions of [3 nQ], where each column
-%                       contains a Q vector in Angstrom^-1 units.
-% gtensor       If true, the g-tensor will be included in the spin-spin
-%               correlation function. Including anisotropic g-tensor or
-%               different g-tensor for different ions is only possible
-%               here. Including a simple isotropic g-tensor is possible
-%               afterwards using the sw_instrument() function.
-% fitmode       Speedup (for fitting mode only), default is false.
-% notwin        If true, the spectra of the twins won't be calculated.
-%               Default is false.
-% sortMode      The spin wave modes will be sorted if true. Default is
+%   For example to calculate the spectrum along $(h,0,0)$ use:
+%   ```
+%   Q = [sym('h') 0 0]
+%   ```
+%   To calculate spectrum at a specific $Q$ point symbolically, e.g. at
+%   $(0,1,0)$ use:
+%   ```
+%   Q = sym([0 1 0])
+%   ```
+%
+% ### Name-Value Pair Arguments
+%
+% `'formfact'`
+% : If true, the magnetic form factor is included in the spin-spin
+%   correlation function calculation. The form factor coefficients are
+%   stored in `obj.unit_cell.ff(1,:,atomIndex)`. Default value is `false`.
+%
+% `'formfactfun'`
+% : Function that calculates the magnetic form factor for given $Q$ value.
+%   value. Default value is `@sw_mff`, that uses a tabulated coefficients
+%   for the form factor calculation. For anisotropic form factors a user
+%   defined function can be written that has the following header:
+%   ```
+%   F = formfactfun(atomLabel,Q)
+%   ```
+%   where the parameters are:
+%   * `F`           row vector containing the form factor for every input 
+%                   $Q$ value
+%   * `atomLabel`   string, label of the selected magnetic atom
+%   * `Q`           matrix with dimensions of $[3\times n_Q]$, where each
+%                   column contains a $Q$ vector in $\\ang^{-1}$ units.
+%
+% `'gtensor'`
+% : If true, the g-tensor will be included in the spin-spin correlation
+%   function. Including anisotropic g-tensor or different
+%   g-tensor for different ions is only possible here. Including a simple
+%   isotropic g-tensor is possible afterwards using the [sw_instrument]
+%   function.
+%
+% `'fitmode'`
+% : If `true`, function is optimized for multiple consecutive calls (e.g. 
+%   the output spectrum won't contain the copy of `obj`), default is
+%   `false`.
+%
+% `'notwin'`
+% : If `true`, the spectra of the twins won't be calculated. Default is
+% `false`.
+%
+% `'sortMode'`
+% : If `true`, the spin wave modes will be sorted. Default is `true`.
+%
+% `'optmem'`
+% : Parameter to optimise memory usage. The list of Q values will be cut
+%   into `optmem` number of pieces and will be calculated piece by piece to
+%   decrease peak memory usage. Default value is 0, when the number
+%   of slices are determined automatically from the available free memory.
+%
+% `'tol'`
+% : Tolerance of the incommensurability of the magnetic ordering wavevector.
+%   Deviations from integer values of the ordering wavevector smaller than
+%   the tolerance are considered to be commensurate. Default value is
+%   $10^{-4}$.
+%
+% `'omega_tol'`
+% : Tolerance on the energy difference of degenerate modes when
+%   diagonalising the quadratic form, default value is $10^{-5}$.
+%
+% `'hermit'`
+% : Method for matrix diagonalization with the following logical values:
+% 
+%   * `true`    using Colpa's method (for details see [J.H.P. Colpa, Physica 93A (1978) 327](http://www.sciencedirect.com/science/article/pii/0378437178901607)),
+%               the dynamical matrix is converted into another Hermitian
+%               matrix, that will give the real eigenvalues.
+%   * `false`   using the standard method (for details see [R.M. White, PR 139 (1965) A450](https://journals.aps.org/pr/abstract/10.1103/PhysRev.139.A450))
+%               the non-Hermitian $\mathcal{g}\times \mathcal{H}$ matrix
+%               will be diagonalised, which is computationally less
+%               efficient. Default value is `true`.
+%
+% {{note Always use Colpa's method, except when imaginary eigenvalues are
+%   expected. In this case only White's method work. The solution in this
+%   case is wrong, however by examining the eigenvalues it can give a hint
+%   where the problem is.}}
+%               
+% `'saveH'`
+% : If true, the quadratic form of the Hamiltonian is also saved in the
+%   output. Be carefull, it can take up lots of memory. Default value is
+%   `false`.
+%
+% `'saveV'`
+% : If true, the matrices that transform the normal magnon modes into the
+%   magnon modes localized on the spins are also saved into the output. Be
+%   carefull, it can take up lots of memory. Default value is `false`.
+%
+% `'saveSabp'`
+% : If true, the dynamical structure factor in the rotating frame
+%   $S'(k,\omega)$ is saved. Default value is `false`.
+%
+% `'title'`
+% : Gives a title string to the simulation that is saved in the output.
+%
+% `'fid'`
+% : Defines whether to provide text output. The default value is determined
+%   by the `fid` preference stored in [swpref]. The possible values are:
+%   * `0`   No text output is generated.
+%   * `1`   Text output in the MATLAB Command Window.
+%   * `fid` File ID provided by the `fopen` command, the output is written
+%           into the opened file stream.
+%
+% `'tid'`
+% : Determines if the elapsed and required time for the calculation is
+%   displayed. The default value is determined by the `tid` preference
+%   stored in [swpref]. The following values are allowed (for more details
+%   see [sw_timeit]):
+%   * `0` No timing is executed.
+%   * `1` Display the timing in the Command Window.
+%   * `2` Show the timing in a separat pup-up window.
+%
+% ### Output Arguments
+%
+% `spectra`
+% : structure, with the following fields:
+%   * `omega`   Calculated spin wave dispersion with dimensions of
+%               $[n_{mode}\times n_{Q}]$.
+%   * `Sab`     Dynamical structure factor with dimensins of
+%               $[3\times 3\times n_{mode}\times n_{Q}]$. Each
+%               `(:,:,i,j)` submatrix contains the 9 correlation functions
+%               $S^{xx}$, $S^{xy}$, $S^{xz}$, etc. If given, magnetic form
+%               factor is included. Intensity is in \\hbar units, normalized
+%               to the crystallographic unit cell.
+%   * `H`       Quadratic form of the Hamiltonian. Only saved if `saveH` is
 %               true.
-% optmem        Parameter to optimise memory usage. The list of hkl values
-%               will be cut into optmem number of pieces and will be
-%               calculated piece by piece to decrease memory usage. Default
-%               of optmem is zero, when the number of slices are determined
-%               automatically from the available free memory.
-% tol           Tolerance of the incommensurability of the magnetic
-%               ordering wavevector. Deviations from integer values of the
-%               ordering wavevector smaller than the tolerance are
-%               considered to be commensurate. Default value is 1e-4.
-% omega_tol     Tolerance on the energy difference of degenerate modes when
-%               diagonalising the quadratic form, default is 1e-5.
-% hermit        Method for matrix diagonalization:
-%                   true      J.H.P. Colpa, Physica 93A (1978) 327,
-%                   false     R.M. White, PR 139 (1965) A450.
-%               Colpa: the grand dynamical matrix is converted into another
-%                      Hermitian matrix, that will give the real
-%                      eigenvalues.
-%               White: the non-Hermitian g*H matrix will be diagonalised,
-%                      that is not the elegant method.
-%               Advise:
-%               Always use Colpa's method, except when small imaginary
-%               eigenvalues are expected. In this case only White's method
-%               work. The solution in this case is wrong, however by
-%               examining the eigenvalues it can give a hint where the
-%               problem is.
-%               Default is true.
-% saveH         If true, the quadratic form of the Hamiltonian is saved. Be
-%               carefull, it can take up lots of memory. Default is false.
-% saveV         If true, the matrices that transform the normal magnon
-%               modes into the magnon modes localized on the spins are
-%               saved. Be carefull, it can take up lots of memory.
-%               Default is false.
-% saveSabp      If true, the dynamical structure factorin the rotating
-%               frame is saved S'(k,omega). Default is false.
-% title         Gives a title string to the simulation that is saved in the
-%               output.
-% fid           Defines whether to provide text output. Default is defined
-%               in obj.fid. The possible values:
-%                   0       No text output is generated.
-%                   1       Text output in the MATLAB Command Window.
-%                   fid     File ID provided by the fopen() command, the
-%                           output is written into the opened file stream.
-%
-% Output:
-%
-% 'spectra' is a structure, with the following fields:
-% omega         Calculated spin wave dispersion, dimensins are
-%               [nMode nHkl], where nMagExt is the number of magnetic
-%               atoms in the extended unit cell.
-% Sab           Dynamical structure factor, dimensins are
-%               [3 3 nMode nHkl]. Each (:,:,i,j) submatrix contains the
-%               9 correlation functions: Sxx, Sxy, Sxz, etc. If given,
-%               magnetic form factor is included. Intensity is in hBar
-%               units, normalized to the crystallographic unit cell.
-% H             Quadratic form of the Hamiltonian.
-%               Only saved if saveH is true.
-% V             Transformation matrix from the normal magnon modes to the
-%               magnons localized on spins:
-%                   x_i = sum_j V_ij * x_j'
-%               Only saved if saveV is true.
-% Sabp          Dynamical structure factor in the rotating frame,
-%               dimensions are [3 3 nMode nHkl], but the number of modes
-%               are equal to twice the number of magnetic atoms.
-% formfact      Cell containing the labels of the magnetic ions if form
+%   * `V`       Transformation matrix from the normal magnon modes to the
+%               magnons localized on spins using the following:
+%               $x_i = \sum_j V_{ij} \times x_j'$
+%               Only saved if `saveV` is true.
+%   * `Sabp`    Dynamical structure factor in the rotating frame,
+%               dimensions are $[3\times 3\times n_{mode}\times n_{Q}]$,
+%               but the number of modes are equal to twice the number of
+%               magnetic atoms.
+%   * `formfact`  Cell containing the labels of the magnetic ions if form
 %               factor in included in the spin-spin correlation function.
-% cmplxBase     The local coordinate system on each magnetic moment is
+%   * `cmplxBase` The local coordinate system on each magnetic moment is
 %               defined by the complex magnetic moments:
-%                   e1 = imag(M/norm(M))
-%                   e3 = real(M/norm(M))
-%                   e2 = cross(e3,e1)
+%               $\begin{align}  e_1 &= \Im(\hat{M})\\
+%                               e_3 &= Re(\hat{M})\\
+%                               e_2 &= e_3\times e_1
+%               \end{align}$
 %
-% nMode is the number of magnetic mode. For commensurate structures it is
-% double the number of magnetic atoms in the magnetic cell/supercell. For
-% incommensurate structures this number is tripled due to the appearance of
-% the (Q+/-km) Fourier components in the correlation functions. For every k
-% points in the following order: (k-km,k,k+km).
+%   * `hkl`     Contains the input $Q$ values, dimensions are $[3\times n_{Q}]$.
+%   * `hklA`    Same $Q$ values, but in $\\ang^{-1}$ unit, in the
+%               lab coordinate system, dimensins are $[3\times n_{Q}]$.
+%   * `incomm`  Logical value, tells whether the calculated spectra is
+%               incommensurate or not.
+%   * `obj`     The copy (clone) of the input `obj`, see [spinw.copy].
 %
-% If several twins exist in the sample, omega and Sab are packaged into a
-% cell, that contains nTwin number of matrices.
+% The number of magnetic modes (labeled by `nMode`) for commensurate
+% structures is double the number of magnetic atoms in the magnetic cell.
+% For incommensurate structures this number is tripled due to the
+% appearance of the $(Q\pm k_m)$ Fourier components in the correlation
+% functions. For every $Q$ points in the following order:
+% $(Q-k_m,Q,Q+k_m)$.
 %
-% hkl           Contains the input Q values, dimensins are [3 nHkl].
-% hklA          Same Q values, but in reciproc Angstrom units in the
-%               lab coordinate system, dimensins are [3 nHkl].
-% incomm        Whether the spectra calculated is incommensurate or not.
-% obj           The copy of the input obj.
+% If several twins exist in the sample, `omega` and `Sab` are packaged into
+% a cell, that contains $n_{twin}$ number of matrices.
 %
-% Example:
+% ### See Also
 %
-% tri = sw_model('triAF',1);
-% sw_plotspec(tri.spinwave({[0 0 0] [1 1 0]}))
+% [spinw] \| [spinw.spinwavesym] \| [sw_mex] \| [spinw.powspec] \| [sortmode]
 %
-% The above example will calculate and plot the spin wave dispersion of the
-% triangular lattice antiferromagnet (S=1, J=1) along the [H H 0] direction
-% in reciprocal space.
-%
-% See also SPINW, SPINW.SPINWAVESYM, SW_MEX, SPINW.POWSPEC.
-%
+
+pref = swpref;
 
 % for linear scans create the Q line(s)
 if nargin > 1
@@ -178,7 +248,7 @@ orthWarn0 = false;
 singWarn0 = warning('off','MATLAB:nearlySingularMatrix');
 
 % use mex file by default?
-useMex = swpref.getpref('usemex',[]);
+useMex = pref.usemex;
 
 % calculate symbolic spectrum if obj is in symbolic mode
 if obj.symbolic
@@ -204,7 +274,7 @@ end
 
 % help when executed without argument
 if nargin==1
-    help spinw.spinwave
+    swhelp spinw.spinwave
     spectra = [];
     return
 end
@@ -216,7 +286,7 @@ inpForm.defval = {false     false    true       0        1e-4  true    };
 inpForm.size   = {[1 1]     [1 1]    [1 1]      [1 1]    [1 1] [1 1]   };
 
 inpForm.fname  = [inpForm.fname  {'omega_tol' 'saveSabp' 'saveV' 'saveH'}];
-inpForm.defval = [inpForm.defval {1e-5        true       false   false  }];
+inpForm.defval = [inpForm.defval {1e-5        false      false   false  }];
 inpForm.size   = [inpForm.size   {[1 1]       [1 1]      [1 1]   [1 1]  }];
 
 inpForm.fname  = [inpForm.fname  {'formfact' 'formfactfun' 'title' 'gtensor'}];
@@ -224,17 +294,10 @@ inpForm.defval = [inpForm.defval {false       @sw_mff      title0  false    }];
 inpForm.size   = [inpForm.size   {[1 -1]      [1 1]        [1 -2]  [1 1]    }];
 
 inpForm.fname  = [inpForm.fname  {'cmplxBase' 'tid' 'fid' }];
-inpForm.defval = [inpForm.defval {false       -1    nan   }];
+inpForm.defval = [inpForm.defval {false       -1    -1    }];
 inpForm.size   = [inpForm.size   {[1 1]       [1 1] [1 1] }];
 
 param = sw_readparam(inpForm, varargin{:});
-
-if isnan(param.fid)
-    % Print output into the following file
-    fid = obj.fid;
-else
-    fid = param.fid;
-end
 
 if ~param.fitmode
     % save the time of the beginning of the calculation
@@ -247,8 +310,13 @@ if param.fitmode
 end
 
 if param.tid == -1
-    param.tid = swpref.getpref('tid',[]);
+    param.tid = pref.tid;
 end
+
+if param.fid == -1
+    param.fid = pref.fid;
+end
+fid = param.fid;
 
 % generate magnetic structure in the rotating noation
 magStr = obj.magstr;
@@ -298,7 +366,7 @@ end
 
 if incomm
     % TODO
-    if ~helical
+    if ~helical && ~param.fitmode
         warning('spinw:spinwave:Twokm',['The two times the magnetic ordering '...
             'wavevector 2*km = G, reciproc lattice vector, use magnetic supercell to calculate spectrum!']);
     end
@@ -602,7 +670,7 @@ if param.saveH
     Hsave = zeros(2*nMagExt,2*nMagExt,nHkl);
 end
 
-sw_status(0,1,param.tid,'Spin wave spectrum calculation');
+sw_timeit(0,1,param.tid,'Spin wave spectrum calculation');
 
 warn1 = false;
 
@@ -728,12 +796,25 @@ for jj = 1:nSlice
                 [K, posDef]  = chol(ham(:,:,ii));
                 if posDef > 0
                     try
-                        K = chol(ham(:,:,ii)+eye(2*nMagExt)*param.omega_tol);
+                        % get tolerance from smallest negative eigenvalue
+                        tol0 = eig(ham(:,:,ii));
+                        tol0 = sort(real(tol0));
+                        tol0 = abs(tol0(1));
+                        % TODO determine the right tolerance value
+                        tol0 = tol0*sqrt(nMagExt*2)*4;
+                        if tol0>param.omega_tol
+                            error('spinw:spinwave:NonPosDefHamiltonian','Very baaaad!');
+                        end
+                        try
+                            K = chol(ham(:,:,ii)+eye(2*nMagExt)*tol0);
+                        catch
+                            K = chol(ham(:,:,ii)+eye(2*nMagExt)*param.omega_tol);
+                        end
                         warn1 = true;
                     catch PD
                         if param.tid == 2
                             % close timer window
-                            sw_status(100,2,param.tid);
+                            sw_timeit(100,2,param.tid);
                         end
                         error('spinw:spinwave:NonPosDefHamiltonian',...
                             ['Hamiltonian matrix is not positive definite, probably'...
@@ -745,22 +826,14 @@ for jj = 1:nSlice
                 K2 = K*gComm*K';
                 K2 = 1/2*(K2+K2');
                 % Hermitian K2 will give orthogonal eigenvectors
-                if param.sortMode
-                    [U, D] = eigenshuffle(K2);
-                else
-                    [U, D] = eig(K2);
-                    D = diag(D);
-                end
+                [U, D] = eig(K2);
+                D      = diag(D);
                 
-                % sort eigenvalues to decreasing order this contradicts with
-                % eigenshuffle
-                
-                % TODO
-                [D, idx] = sort(D,'descend');
+                % sort modes accordign to the real part of the energy
+                [~, idx] = sort(real(D),'descend');
                 U = U(:,idx);
-                
                 % omega dispersion
-                omega(:,end+1) = D; %#ok<AGROW>
+                omega(:,end+1) = D(idx); %#ok<AGROW>
                 
                 % the inverse of the para-unitary transformation V
                 V(:,:,ii) = inv(K)*U*diag(sqrt(gCommd.*omega(:,end))); %#ok<MINV>
@@ -770,15 +843,9 @@ for jj = 1:nSlice
         % All the matrix calculations are according to White's paper
         % R.M. White, et al., Physical Review 139, A450?A454 (1965)
         
-        %gham = 0*ham;
-        %for ii = 1:nHklMEM
-        %    gham(:,:,ii) = gComm*ham(:,:,ii);
-        %end
-        
         gham = mmat(gComm,ham);
-        %gham = mtimesx(gComm,ham);
         
-        [V, D, orthWarn] = eigorth(gham,param.omega_tol, param.sortMode,useMex);
+        [V, D, orthWarn] = eigorth(gham,param.omega_tol,useMex);
         
         orthWarn0 = orthWarn || orthWarn0;
         
@@ -837,7 +904,13 @@ for jj = 1:nSlice
     % Normalizes the intensity to single unit cell.
     Sab = cat(4,Sab,squeeze(sum(zeda.*ExpFL.*VExtL,4)).*squeeze(sum(zedb.*ExpFR.*VExtR,3))/prod(nExt));
     
-    sw_status(jj/nSlice*100,0,param.tid);
+    sw_timeit(jj/nSlice*100,0,param.tid);
+end
+
+if param.sortMode
+    % sort the spin wave modes
+    [omega, Sab] = sortmode(omega,reshape(Sab,9,size(Sab,3),[]));
+    Sab          = reshape(Sab,3,3,size(Sab,2),[]);
 end
 
 [~,singWarn] = lastwarn;
@@ -850,7 +923,7 @@ if obj.unit.nformula > 0
     Sab = Sab/double(obj.unit.nformula);
 end
 
-sw_status(100,2,param.tid);
+sw_timeit(100,2,param.tid);
 
 fprintf0(fid,'Calculation finished.\n');
 
@@ -984,12 +1057,14 @@ if orthWarn0
     warning('spinw:spinwave:NoOrth','Eigenvectors of defective eigenvalues cannot be orthogonalised at some q-point!');
 end
 
-lineLink = ['<a href="matlab:opentoline([''' sw_rootdir 'swfiles' filesep '@spinw' filesep 'spinwave.m''' '],758,0)">line 758</a>'];
-
 if strcmp(singWarn,'MATLAB:nearlySingularMatrix')
+    lineLink = 'line 846';
+    if feature('HotLinks')
+        lineLink = ['<a href="matlab:opentoline([''' sw_rootdir 'swfiles' filesep '@spinw' filesep 'spinwave.m''' '],846,0)">' lineLink '</a>'];
+    end
     warning('spinw:spinwave:nearlySingularMatrix',['Matrix is close '...
         'to singular or badly scaled. Results may be inaccurate.\n> In spinw/spinwave (' lineLink ')']);
-    fprintf(repmat('\b',[1 30]));
+    %fprintf(repmat('\b',[1 30]));
 end
 
 end

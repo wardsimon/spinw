@@ -1,45 +1,78 @@
 function qGrid = sw_qgrid(varargin)
 % creates a Q grid
+% 
+% ### Syntax
+% 
+% `qgrid = sw_qgrid(Name,Value)`
+% 
+% ### Description
+% 
+% `qgrid = sw_qgrid(Name,Value)` generates n-dimensional grids ($n<=3$) in
+% 3D space, e.g. points on a line in 3D. It uses $n$ linearly independent
+% vectors ("lattice vectors") and bin values (coordinates in "lattice
+% units" or "lu") to generate the points. It works similarly as the d3d
+% constructor in [Horace](http://horace.isis.rl.ac.uk/Main_Page).
+% 
+% ### Name-Value Pair Arguments
+% 
+% `'u'`
+% :  Row vector with 3 elements, determines the first axis in 3D
+%    space, default value is `[1 0 0]`.
+% 
+% `'v'`
+% :  Second axis, default value is `[0 1 0]`.
+% 
+% `'w'`
+% :  Third axis, default value is `[0 0 1]`.
+% 
+% `'uoffset'`
+% :  Row vector with 3 elements, determines the offset of origin
+%    in lu, (fourth element is accepted but discarded).
+% 
+% `'ubin'`
+% :  Bin points along the first axis. Can be a vector with 1, 2 or 3
+%    elements:
 %
-% qGrid = SW_QGRID('option1',value1,...)
+%    * `[B1]`        single value along the $u$-axis at a coordinate of `B1*u`
+%    * `[B1 B2]`     range along the $u$-axis at coordinates of `[B1:1/nExt:B2]*u`
+%    * `[B1 dB B2]`  range along the $u$-axis at coordinates of `[B1:dB:B2]*u`
+% 
+% `'vbin'`
+% :  Same as `ubin` but along the $v$-axis.
+% 
+% `'wbin'`
+% :  Same as `ubin` but along the $w$-axis.
+% 
+% `'nExt'`
+% :  Vector with $n$-elements that can define fractional bin steps,
+%    default values is `[1 1 1]`.
+% 
+% `'lab'`
+% :  Cell array of projection axis labels with 3 elements (4th
+%    element discarded), e.g. `{'x' 'y' 'z'}`.
+% 
+% The dimension count $n$ is determined by the number of given bins
+% ($1<=n<=3$), so if only `ubin` is given, $n=1$; if both `ubin` and `vbin`
+% are defined then $n=2$, etc.
+% 
+% `'fid'`
+% : Defines whether to provide text output. The default value is determined
+%   by the `fid` preference stored in [swpref]. The possible values are:
+%   * `0`   No text output is generated.
+%   * `1`   Text output in the MATLAB Command Window.
+%   * `fid` File ID provided by the `fopen` command, the output is written
+%           into the opened file stream.
 %
-% The function helps to generate n-dimensional grids (n<=3) in 3D space. It
-% uses n linearly independent vectors ("lattice vectors") and bin values
-% (coordinates in "lattice units" or "lu") to generate the points. It works
-% similarly as the d3d constructor in Horace.
+% ### Output Arguments
+% 
+% `qGrid`
+% : A matrix with dimensions of $[3\times n_{ax1}\times n_{ax2},...]$,
+%   where $n_{axi}$ is the index of points along $i$th axis with $1<=i<=n$.
+% 
+% ### See Also
+% 
+% [sw_qscan]
 %
-% Options:
-%
-% u         Row vector with 3 elements, determining the first axis in 3D
-%           space, default value is [1 0 0].
-% v         Second axis, default value is [0 1 0].
-% w         Third axis, default value is [0 0 1].
-% uoffset   Column vector with 3 elements, determining the offset of origin
-%           in lu, (fourth element is accepted but discarded).
-% ubin      Bin points along the first axis. Can be a vector with 1, 2 or 3
-%           elements:
-%               [B1]        single value along the u-axis:  B1*u
-%               [B1 B2]     range along the u-axis:         [B1:1/nExt:B2]*u
-%               [B1 dB B2]  range along the u-axis:         [B1:dB:B2]*u
-% vbin      Same as ubin but along the v-axis.
-% wbin      Same as ubin but along the w-axis.
-% nExt      Vector with n-elements that can define fractional bin steps,
-%           default is [1 1 1].
-% lab       Cell array of projection axis labels with 3 elements (4th
-%           element discarded).
-%
-% n is determined by the number of given bins (1<=n<=3), so if only 'ubin'
-% is given, n=1; if 'ubin' and 'vbin' are both given n=2, etc.
-%
-% Output:
-%
-% qGrid     A matrix with dimensions of [3,nAx1,nAx2,...], where nAxi is
-%           the index of points along axis i with 1<=i<=n.
-%
-% See also SW_QSCAN.
-%
-
-fid = swpref.getpref('fid',true);
 
 inpForm.fname  = {'u'     'v'     'w'     'uoffset' 'lab'                          };
 inpForm.defval = {[1 0 0] [0 1 0] [0 0 1] [0 0 0]   {'(h,0,0)' '(0,k,0)' '(0,0,l)'}};
@@ -47,15 +80,20 @@ inpForm.size   = {[1 3]   [1 3]   [1 3]   [1 -1]    [1 -2]                      
 inpForm.soft   = {false   false   false   false     false                          };
 
 inpForm.fname  = [inpForm.fname  {'ubin' 'vbin' 'wbin' 'nExt'  'mat'  'bin'  'fid'}];
-inpForm.defval = [inpForm.defval { []     []     []    [1 1 1] []     {}     fid  }];
+inpForm.defval = [inpForm.defval { []     []     []    [1 1 1] []     {}     -1   }];
 inpForm.size   = [inpForm.size   {[1 -3] [1 -4] [1 -5] [1 -6]  [-7 3] [1 -8] [1 1]}];
 inpForm.soft   = [inpForm.soft   {true   true   true   false   true   true   false}];
 
 param = sw_readparam(inpForm, varargin{:});
+pref = swpref;
 
 if nargin == 0
-    help sw_qgrid
+    swhelp sw_qgrid
     return
+end
+
+if param.fid == -1
+    param.fid = pref.fid;
 end
 
 % size of magnetic supercell

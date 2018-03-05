@@ -1,7 +1,21 @@
 function outStr = sw_version()
 % returns the installed version of SpinW
+% 
+% ### Syntax
+% 
+% `sw_version`
 %
-% SW_VERSION()
+% `ver = sw_version`
+% 
+% ### Description
+% 
+% `sw_version` returns the installed version of SpinW and the matlab
+% version. This version number is identical to the tag of the [GitHub SpinW
+% repository](https://github.com/tsdev/spinw).
+%
+% `ver = sw_version` returns the version information in a struct, that
+% contains the program name, version, author, contact, release number,
+% release date and license.
 %
 
 if ~isdeployed
@@ -69,26 +83,28 @@ if ~isdeployed
     if isempty(nSym)
         strSym = 'no Symbolic Math Toolbox installed';
     else
-        strSym = [v0(nSym).Name ' installed'];
+        disp([verStruct.Name verStruct.Version ' (rev ' num2str(verStruct.Release) ')']);
+        onlineRev = sw_update;
+        if onlineRev > str2num(verStruct.Release) %#ok<ST2NM>
+            disp(['Newer version of SpinW is available online (rev. num. ' num2str(onlineRev) '), use the sw_update() function to download it!']);
+        else
+            disp('You have the latest version of SpinW!')
+        end
     end
     
-    
-    if nargout == 0
-        if nField == 0
-            
-            if any(revNum)
-                fprintf('This version of SpinW (rev. num. %d) is not released yet!\n',revNum);
-            else
-                fprintf('This version of SpinW is not released yet!\n');
-            end
-        else
-            disp([verStruct.Name verStruct.Version ' (rev ' num2str(verStruct.Revision) ')']);
-            onlineRev = sw_update;
-            if onlineRev > str2num(verStruct.Revision) %#ok<ST2NM>
-                disp(['Newer version of SpinW is available online (rev. num. ' num2str(onlineRev) '), use the sw_update() function to download it!']);
-            else
-                disp('You have the latest version of SpinW!')
-            end
+else
+    ver0 = struct;
+    ver0.Name     = 'SpinW';
+    ver0.Version  = '';
+    ver0.Release  = '';
+    ver0.Date     = datestr(now,'dd-mmm-yyyy');
+    ver0.Author   = 'S. Tóth and S. Ward';
+    ver0.Contact  = 'spinw4@gmail.com, @spinw4 on Twitter';
+    ver0.License  = 'GNU GENERAL PUBLIC LICENSE';
+
+    if nField == 0
+        if any(revNum)
+            ver0.Release = num2str(revNum);
         end
         fprintf(['MATLAB version: ' version ', ' strSym '\n']);
         

@@ -1,15 +1,30 @@
 function y = gauss(x,p)
-% normalized gaussian function defined by the standard deviation
+% normalized Gaussian function
+% 
+% ### Syntax
+% 
+% `y = func.gauss(x,p)`
+% 
+% ### Description
+% 
+% `y = func.gauss(x,p)` calculates the $y$ values for a Gaussian function
+% evaluated at $x$ and with parameters defined in `p`.
+% 
+% ### Input Arguments
+% 
+% `x`
+% : Coordinate vector where the function will be evaluated.
+% 
+% `p`
+% : Parameter vector with the following elements `p=[I x0 \\sigma]` where:
+%   * `I` integrated intensity,
+%   * `x0` center,
+%   * `\\sigma` standard deviation.
+% 
+% ### See Also
+% 
+% [swfunc.pvoigt] \| [swfunc.gaussfwhm]
 %
-% y = FUNC.GAUSS(x,p)
-%
-% The integral of the function is normalized assuming dx = 1.
-%
-% Input:
-% x         Coordinate vector where the function will be evaluated.
-% p         Parameter vector: [I Centre sigma].
-%
-% See also SWFUNC.VOIGT, SWFUNC.GAUSSFWHM.
 
 % standard deviation
 sigma = p(3);

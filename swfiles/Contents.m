@@ -1,107 +1,116 @@
-% This folder contains all the files related to SpinW but not yet split out
-% into separate libraries.
+% general functions
 %
-% Files
+% This folder contains all the spectral functions and general functions
+% that are related to SpinW.
 %
-% Transforming and plotting calculated spin wave spectrum:
+% ### Files
 %
-%   sw_econtract     - converts (Q,omega) values to Qm values for diffraction instrument
-%   sw_egrid         - creates energy for spectrum color plot
-%   sw_filelist      - lists spinw data in the Matlab workspace or in a .mat file
-%   sw_instrument    - includes instrumental factors into the calculated spectrum
-%   sw_magdomain     - calculates the spin-spin correlation function for magnetic domains
-%   sw_neutron       - calculates neutron scattering intensity for spin wave spectrum
-%   sw_omegasum      - removes degenerate and ghost magnon modes from spectrum
-%   sw_plotspec      - plots spin wave spectrum
-%   sw_xray          - calculates X-ray scattering intensity for phonon spectrum
+% #### Transforming and plotting calculated spin wave spectrum
 %
-% Generate list of vectors in reciprocal space:
+% These functions operate on the calculated spectra, which is the output of
+% [spinw.spinwave] or [spinw.powspec] commands. They enable to post process
+% the calculated spin-spin correlation function, including instrumental
+% resolution, cross section calculation, binning etc.
 %
-%   sw_qgrid         - creates a Q grid
-%   sw_qscan         - creates linear scans between Q points in 3D
+%   sw_econtract 
+%   sw_egrid     
+%   sw_filelist  
+%   sw_instrument
+%   sw_magdomain 
+%   sw_neutron   
+%   sw_omegasum  
+%   sw_plotspec  
+%   sw_xray      
 %
-% Resolution claculation and convolution:
+% #### Generate list of vectors in reciprocal space
 %
-%   sw_res           - reads a tabulated energy resolution from a file and fits with polynomial
-%   sw_resconv       - Convolute Gaussian with variable width along the first dimension of a matrix
-%   sw_tofres        - includes Q resolution to the spectrum
+% These two functions can generate a set of 3D points in reciprocal space
+% defining either a path made out of straigh lines or a volume.
 %
-% SpinW model related functions:
+%   sw_qgrid
+%   sw_qscan
 %
-%   sw_extendlattice - creates superlattice
-%   sw_fstat         - calculates termodynamical averages during an annealing simulation
-%   sw_intsf         - integrates the structure factor along given Q directions
-%   sw_model         - creates different predefined spin models
-%   sw_bonddim       - find dimensionality of a periodic bond network
+% #### Resolution claculation and convolution
 %
-% Constraint functions for spinw.optmagstr():
+% These functions can import Energy resolution function and convolute it
+% with arbitrary multidimensional dataset
 %
-%   gm_planar        - planar magnetic structure constraint function 
-%   gm_planard       - planar magnetic structure constraint function 
-%   gm_spherical3d   - magnetic structure constraint function with spherical parameterisation
-%   gm_spherical3dd  - magnetic structure constraint function with spherical parameterisation
+%   sw_res    
+%   sw_resconv
+%   sw_tofres 
 %
-% Geometrical calculations:
-%   sw_angle         - calculates the angle between 2 vectors
-%   sw_cartesian     - creates a right handed Cartesian coordinate system
-%   sw_cmod          - modulo one with tolerance
-%   sw_fsub          - simple graph vertex coloring
-%   sw_mattype       - determines the type of square input matrix
-%   sw_nvect         - determines the best normal vector for the set of vectors
-%   sw_quadell       - calculates and plots the parameters of an ellipsoid from a quadratic form
-%   sw_rot           - rotates vectors around arbitrary axis in 3D
-%   sw_rotmat        - rotates vectors around arbitrary axis in 3D
-%   sw_rotmatd       - rotates vectors around arbitrary axis in 3D
+% #### SpinW model related functions
 %
-% Text and graphical input/output for different high level commands:
+%   sw_extendlattice
+%   sw_fstat        
+%   sw_model        
+%   sw_bonddim      
 %
-%   sw_annealfigure  - creates a figure for displaying the status of the annealing simulation
-%   sw_annealplot    - displays information about the annealing simulation
-%   sw_label         - returns axis labels for spectrum plot
-%   sw_circle        - creates an array of the 3D coordinates of the circle circumference
-%   sw_counter       - print the number of calls to this functio to the Command Line
-%   sw_multicolor    - creates RGB color data for multiple 2D overlapping plots
-%   sw_parstr        - parses input string
-%   sw_plotcell      - plots cell structure with circles
-%   sw_plotsf        - plots the structure factor in the selected Q range in 1D or 2D
-%   sw_status        - timer function that displays also the remaining time
+% #### Constraint functions
 %
-% Acessing the SpinW database:
+% Contraint functions for [spinw.optmagstr].
 %
-%   sw_atomdata      - returns information on elements stored in the atom.dat file
-%   sw_cff           - returns the atomic charge form factor values for X-ray scattering
-%   sw_mff           - returns the magnetic form factor values and the coefficients
-%   sw_nb            - returns the bound coherent neutron scattering length (fm)
+%   gm_planar      
+%   gm_planard     
+%   gm_spherical3d 
+%   gm_spherical3dd
 %
-% Symmetry calculations:
+% #### Geometrical calculations
 %
-%   sw_basismat      - determines allowed tensor components in a given point group symmetry
-%   sw_mirror        - mirrors a 3D vector
+% Basic geometrical calculators, functions to generatate rotation
+% operators, generate Cartesian coordinate system from a set of vectors,
+% calculate normal vector to a set of vector, etc.
 %
-% Useful functions for physics:
+%   sw_basismat
+%   sw_cartesian
+%   sw_fsub     
+%   sw_mattype  
+%   sw_nvect    
+%   sw_quadell  
+%   sw_mirror
+%   sw_rot      
+%   sw_rotmat   
+%   sw_rotmatd  
 %
-%   sw_bose          - coefficient for boson correlation functions for different temperatures
-%   sw_converter     - converts energy and momentum units for a given particle
-%   sw_fibo          - returns the last two Fibonacci number smaller or equal to the
+% #### Text and graphical input/output for different high level commands
 %
-% Import functions:
+%   sw_multicolor  
+%   sw_parstr      
+%   sw_timeit      
 %
-%   sw_import        - create SpinW object from .cif and FullProf Studio .fst files
-%   sw_readspec      - read spin wave dispersion data from file
-%   sw_readtable     - reads tabular data
+% #### Acessing the SpinW database
 %
-% Export functions:
+% Functions to read the different data files that store information on
+% atomic properties, such as magnetic form factor, charge, etc.
+% 
+%   sw_atomdata
+%   sw_cff     
+%   sw_mff     
+%   sw_nb      
 %
-%   sw_idata         - creates iData object
+% #### Useful physics functions
 %
-% Other files:
+% The two functions can calculate the Bose factor and convert
+% energy/momentum units, both usefull for neutron and x-ray scattering.
 %
-%   sw_freemem       - gives the amount of free RAM in bytes
-%   sw_initialize    - initializes spinw by removing user entries from the symmetry.dat file
-%   sw_readparam     - parse input arguments (option, value pairs)
-%   sw_rootdir       - gives the path to the SpinW code
-%   sw_uniquetol     - returns the unique column vectors within tolerance
-%   sw_update        - updates the SpinW installation from the internet
-%   sw_version       - returns the installed version of SpinW
-%   sw_mex           - compiles the mex files and test them
-%   sw_notify        - sends system notification in OSX
+%   sw_bose     
+%   sw_converter
+%
+% #### Import functions
+%
+% Functions to import tables in text format.
+%
+%   sw_import   
+%   sw_readspec 
+%   sw_readtable
+%
+% #### Miscellaneous
+%
+%   swdoc
+%   sw_freemem   
+%   sw_readparam 
+%   sw_rootdir   
+%   sw_uniquetol 
+%   sw_update    
+%   sw_version   
+%   sw_mex       

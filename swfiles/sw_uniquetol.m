@@ -1,27 +1,45 @@
 function [unique, firstIdx] = sw_uniquetol(M,tol)
 % returns the unique column vectors within tolerance
+% 
+% ### Syntax
+% 
+% `[Mu, firstIdx] = sw_uniquetol(M,tol)`
+% 
+% ### Description
+% 
+% `[Mu, firstIdx] = sw_uniquetol(m,tol)` returns unique column vectors
+% within the given `tol` tolerance. Two column vectors are considered
+% unequal, if the distance between them is larger than the tolerance
+% ($\delta$):
 %
-% [unique, firstIdx] = SW_UNIQUETOL(M,tol)
+% $\sqrt{\sum_i (V_i-U_i)^2} < \delta$
+% 
+% ### Input Arguments
+% 
+% `M`
+% : Matrix that contains column vectors.
+% 
+% `tol`
+% : Distance tolerance, default value is $10^{-5}$.
+% 
+% ### Output Arguments
+% 
+% `Mu`
+% : Matrix that contains the unique column vectors.
 %
-% Two column vectors are considered unequal, if the distance between them
-% is larger than the tolerance.
+% `firstIdx`
+% : Indices pointing to the first occurence of the unique element.
 %
-% Input:
+% This function is similar to the Matlab built-in
+% `unique(M,'rows','first')`, but with controllable tolerance.
 %
-% M         Matrix that contains column vectors.
-% tol       Distance tolerance, default is 1e-5.
+% ### See Also
 %
-% Output:
-%
-% unique    Matrix that contains the unique column vectors.
-% firstIdx  Indices pointing to the first occurence of the unique element.
-%
-% This function is similar to the Matlab built-in unique(M,'rows','first'),
-% but with arbitrary tolerance.
+% [unique](https://ch.mathworks.com/help/matlab/ref/unique.html)
 %
 
 if nargin == 0
-    help sw_uniquetol
+    swhelp sw_uniquetol
     return
 end
 
@@ -29,7 +47,7 @@ if nargin < 2
     tol = 1e-5;
 end
 
-unique = zeros(size(M));
+unique = M*0;
 tol2 = tol(1)^2;
 
 if nargout < 2
@@ -50,7 +68,7 @@ else
     while ~isempty(M)
         unique(:,idx) = M(:,1);
         firstIdx(idx) = idxM(1);
-        idxSame = sum(bsxfunsym(@minus,M,unique(:,idx)).^2,1) < tol2;
+        idxSame = sum(bsxfun(@minus,M,unique(:,idx)).^2,1) < tol2;
         M(:,idxSame)  = [];
         idxM(idxSame) = [];
         

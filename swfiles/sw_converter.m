@@ -1,39 +1,75 @@
 function out = sw_converter(value, unitIn, unitOut, particleName,invert)
 % converts energy and momentum units for a given particle
+% 
+% ### Syntax
+% 
+% `out = sw_converter(value, unitIn, unitOut)`
+% 
+% `out = sw_converter(value, unitIn, unitOut, particleName)`
 %
-% out = SW_CONVERTER(value, unitIn, unitOut, {particleName}) 
+% ### Description
+% 
+% `out = sw_converter(value, unitin, unitout)` will convert momentum and
+% energy values assuming neutron as a particle.
+% 
+% `out = sw_converter(value, unitin, unitout,particleName)` will convert
+% momentum and energy values for a given particle, such as neutron, photon,
+% etc.
 %
-% Input:
+% ### Example
 %
-% particleName      Name of the particle:
-%                       'neutron'   default
-%                       'proton'
-%                       'electron'
-%                       'photon'
-% value             Numerical input value, can be arbitrary matrix.
-% unitIn            Units of the input value:
-%                       'A-1'       momentum in Angstrom^-1.
-%                       'k'         -||-
-%                       'Angstrom'  wavelength in Angstrom.
-%                       'lambda'    -||-
-%                       'A'         -||-
-%                       'Kelvin'    temperature in Kelvin.
-%                       'K'         -||-
-%                       'mps'       speed in m/s.
-%                       'J'         energy in Joule.
-%                       'meV'       energy in meV.
-%                       'THz'       frequency in Thz.
-%                       'cm-1'      2*pi/lambda in cm^-1.
-%                       'eV'        energy in eV.
-%                       'fs'        wave period time in fs.
-%                       'ps'        wave period time in ps.
-%                       'nm'        wavelength in nm.
-%                       'um'        wavelength in um.
-% unitOut           Units of the output value, same options as for unitIn.
+% Calculate the energy of a neutron (in meV) which has a wavelength of
+% 5 \\ang:
+%
+% ```
+% >>sw_converter(5,'A','meV')>>
+% ```
+%
+% Calculate the wavelength of X-ray in \\ang that has 7.5 keV energy:
+%
+% ```
+% >>sw_converter(7.5,'keV','A','photon')>>
+% ```
+%
+% ### Input Arguments
+% 
+% `value`
+% : Numerical input value, can be scalar or matrix with arbitrary
+%   dimensions.
+%
+% `unitIn`
+% : Units of the input value, one of the following string:
+%   * `'A-1'`        momentum in \\ang$^{-1}$,
+%   * `'A^-1'`       momentum in \\ang$^{-1}$,
+%   * `'k'`          momentum in \\ang$^{-1}$,
+%   * `'Angstrom'`   wavelength in \\ang,
+%   * `'lambda'`     wavelength in \\ang,
+%   * `'A'`          wavelength in \\ang,
+%   * `'\\ang'`          wavelength in \\ang,
+%   * `'K'`          temperature in Kelvin,
+%   * `'m/s'`        speed in m/s,
+%   * `'J'`          energy in Joule,
+%   * `'meV'`        energy in meV,
+%   * `'eV'`         energy in eV,
+%   * `'keV'`        energy in keV,
+%   * `'THz'`        frequency in Thz,
+%   * `'cm-1'`       $2\pi/\lambda$ in cm$^{-1}$,
+%   * `'fs'`         wave period time in fs,
+%   * `'ps'`         wave period time in ps,
+%   * `'nm'`         wavelength in nm,
+%   * `'um'`         wavelength in $\mu$m.
+% 
+% `unitOut`
+% : Units of the output value, same strings are accepted as for `unitIn`.
+%
+% `particleName`
+% : String, the name of the particle, one of the following values: 
+%   `'neutron'` (default), `'proton'`, `'electron'`, `'photon'`, `'xray'`,
+%   `'light'`.
 %
 
 if nargin == 0
-    help sw_converter
+    swhelp sw_converter
     return
 end
 
@@ -94,7 +130,7 @@ switch particleName
         m = mP;
     case 'electron'
         m = mE;
-    case 'photon'
+    case {'photon' 'xray' 'x-ray' 'light'}
         m = 0;
     otherwise
         error('sw_converter:WrongParticle','Particle name is wrong!');
@@ -103,11 +139,11 @@ end
 % Conversions
 switch unitIn
     % convert everything into momentum in Angstrom^-1
-    case {'Angstrom' 'A' 'lambda'}
+    case {'Angstrom' 'A' 'lambda' 'angstrom' symbol('a')}
         k = 2*pi./value;
     case 'nm'
         k = 2*pi./(value*10);
-    case 'um'
+    case {'um' [symbol('\\m') 'm']}
         k = 2*pi./(value*1e4);
     case {'Kelvin' 'K'}
         if m~=0
@@ -115,7 +151,7 @@ switch unitIn
         else
             k = value*EK2J/clight/1e10/hBar;
         end
-    case {'k' 'A-1'}
+    case {'k' 'A-1' 'Angstrom-1' 'angstrom-1' 'A^-1' symbol('\\a\\^-\\^1')}
         k = value;
     case 'mps'
         if m~=0
@@ -142,13 +178,19 @@ switch unitIn
         else
             k = value*1e3/hBar/clight*EmeV2J/1e10;
         end
+    case 'keV'
+        if m~=0
+            k = sqrt((value*1e6*EmeV2J*2*m))/hBar/1e10;
+        else
+            k = value*1e6/hBar/clight*EmeV2J/1e10;
+        end
     case 'THz'
         if m~=0
             k = sqrt(value*ETHz2meV*EmeV2J*2*m)/hBar/1e10;
         else
             k = value*1e12*2*pi/clight/1e10;
         end
-    case 'cm-1'
+    case {'cm-1' symbol('cm\\^-\\^1') 'cm^-1'}
         k = 1e-8*value*2*pi;
     case 'fs'
         k = 1/(value*1e-15)*2*pi/clight/1e10;
@@ -158,11 +200,11 @@ end
 
 switch unitOut
     % convert from momentum in Angstrom^-1 to output units
-    case {'Angstrom' 'A'}
+    case {'Angstrom' 'A' 'angstrom' 'lambda' symbol('a')}
         out = 2*pi./k;
     case 'nm'
         out = 2*pi./k*0.1;
-    case 'um'
+    case {'um' [symbol('\\m') 'm']}
         out = 2*pi./k*1e-4;
     case {'Kelvin' 'K'}
         if m~=0
@@ -170,9 +212,9 @@ switch unitOut
         else
             out = k/EK2J*clight*1e10*hBar;
         end
-    case {'k' 'A-1'}
+    case {'k' 'A-1' 'Angstrom-1' 'angstrom-1' 'A^-1' symbol('\\a\\^-\\^1')}
         out = k;
-    case 'mps'
+    case {'mps' 'm/s'}
         if m~=0
             out = k/m*hBar*1e10;
         else
@@ -190,13 +232,19 @@ switch unitOut
         else
             out = k/EmeV2J*clight*1e10*hBar*1e-3;
         end
+    case 'keV'
+        if m~=0
+            out = (k*hBar*1e10).^2/EmeV2J/2/m*1e-6;
+        else
+            out = k/EmeV2J*clight*1e10*hBar*1e-6;
+        end
     case 'THz'
         if m~=0
             out = (k*hBar*1e10).^2/ETHz2meV/EmeV2J/2/m;
         else
             out = k*clight/2/pi/1e12*1e10;
         end
-    case 'cm-1'
+    case {'cm-1' symbol('cm\\^-\\^1') 'cm^-1'}
         out = 1e8*k/2/pi;
     case 'fs'
         out = 2*pi/clight/k/1e10*1e15;
