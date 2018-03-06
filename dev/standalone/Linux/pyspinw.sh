@@ -27,6 +27,6 @@ while [ $# -gt 0 ]; do
     args="${args} "${token}""
     shift
 done
-eval ""${exe_dir}/pyspinw"" $args
+eval "\"${exe_dir}/pyspinw\"" $args
 
 exit

@@ -83,28 +83,26 @@ if ~isdeployed
     if isempty(nSym)
         strSym = 'no Symbolic Math Toolbox installed';
     else
-        disp([verStruct.Name verStruct.Version ' (rev ' num2str(verStruct.Release) ')']);
-        onlineRev = sw_update;
-        if onlineRev > str2num(verStruct.Release) %#ok<ST2NM>
-            disp(['Newer version of SpinW is available online (rev. num. ' num2str(onlineRev) '), use the sw_update() function to download it!']);
-        else
-            disp('You have the latest version of SpinW!')
-        end
+        strSym = [v0(nSym).Name ' installed'];
     end
-        outStr = struct;
-else
-    ver0 = struct;
-    ver0.Name     = 'SpinW';
-    ver0.Version  = '';
-    ver0.Release  = '';
-    ver0.Date     = datestr(now,'dd-mmm-yyyy');
-    ver0.Author   = 'S. Tóth and S. Ward';
-    ver0.Contact  = 'spinw4@gmail.com, @spinw4 on Twitter';
-    ver0.License  = 'GNU GENERAL PUBLIC LICENSE';
     
-    if nField == 0
-        if any(revNum)
-            ver0.Release = num2str(revNum);
+    
+    if nargout == 0
+        if nField == 0
+            
+            if any(revNum)
+                fprintf('This version of SpinW (rev. num. %d) is not released yet!\n',revNum);
+            else
+                fprintf('This version of SpinW is not released yet!\n');
+            end
+        else
+            disp([verStruct.Name verStruct.Version ' (rev ' num2str(verStruct.Release) ')']);
+            onlineRev = sw_update;
+            if onlineRev > str2num(verStruct.Release) %#ok<ST2NM>
+                disp(['Newer version of SpinW is available online (rev. num. ' num2str(onlineRev) '), use the sw_update() function to download it!']);
+            else
+                disp('You have the latest version of SpinW!')
+            end
         end
         fprintf(['MATLAB version: ' version ', ' strSym '\n']);
         
@@ -112,15 +110,15 @@ else
         ver0 = struct;
         ver0.Name     = 'SpinW';
         ver0.Version  = '';
-        ver0.Author   = 'S. Toth';
-        ver0.Contact  = 'sandor.toth@psi.ch';
-        ver0.Revision = '';
+        ver0.Release  = '';
         ver0.Date     = datestr(now,'dd-mmm-yyyy');
+        ver0.Author   = 'S. Tóth and S. Ward';
+        ver0.Contact  = 'spinw4@gmail.com, @spinw4 on Twitter';
         ver0.License  = 'GNU GENERAL PUBLIC LICENSE';
         
         if nField == 0
             if any(revNum)
-                ver0.Revision = num2str(revNum);
+                ver0.Release = num2str(revNum);
             end
             outStr = ver0;
         else
@@ -131,5 +129,9 @@ else
             end
         end
     end
+    
+else
+    outStr = struct;
 end
+
 end
