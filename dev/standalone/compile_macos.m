@@ -168,4 +168,9 @@ for i = 1:length(text1)
     fprintf(fid,text1{i});
 end
 
+status = system(sprintf('chmod +x %s',file));
+if status
+    warning('Chmod +x of startup file not set')
+end
+
 end
