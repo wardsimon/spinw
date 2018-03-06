@@ -99,7 +99,7 @@ for ii = 1:numel(toDel)
 end
 
 % add the script file to the app
-copyfile([cRoot '/pyspinw_linux.sh'],[cRoot '/Linux/pyspinw.sh'])
+generateSh(cRoot)
 
 disp('Done!')
 toc
@@ -111,7 +111,7 @@ file = fullfile(rootDir,'Linux','pyspinw.sh');
 try
     rm(file);
 end
-fid = fopen(file);
+fid = fopen(file,'w');
 c = onCleanup(@() fclose(fid));
 if fid < 1
     error('Can not write startup file.')

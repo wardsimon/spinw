@@ -12,3 +12,5 @@ docs/.sass-cache/
 _pdf
 
 *.sublime-workspace
+dev/standalone/Linux/Source/
+

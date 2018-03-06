@@ -116,7 +116,7 @@ try
     rm(file);
 end
 
-fid = fopen(file);
+fid = fopen(file,'w');
 c = onCleanup(@() fclose(fid));
 
 if fid < 1
