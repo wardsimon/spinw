@@ -41,31 +41,41 @@ if ~isdeployed
     verLine = verLine(1:end-1);
     fclose(fid);
     
-    % read strings enclosed with $ signs
-    partStr = {};
-    for ii = 1:numel(verLine)
-        verSel = verLine{ii};
-        while sum(verSel=='$') > 1
-            [~, verSel] = strtok(verSel,'$'); %#ok<*STTOK>
-            [partStr{end+1}, verSel] = strtok(verSel,'$');
-        end
-        
-    end
-    
-    nField = numel(partStr);
-    fieldName = cell(1,nField);
-    fieldVal = cell(1,nField);
-    
-    verStruct = struct;
-    
-    % extract values and save them into a structure
-    for ii = 1:nField
-        [fieldName{ii}, fieldVal{ii}] = strtok(partStr{ii},':');
-        fieldVal{ii} = strtrim(fieldVal{ii}(2:end));
-        verStruct.(fieldName{ii}) = fieldVal{ii};
-    end
-    
-    
+end
+
+nField = numel(partStr);
+fieldName = cell(1,nField);
+fieldVal = cell(1,nField);
+
+verStruct = struct;
+
+% extract values and save them into a structure
+for ii = 1:nField
+    [fieldName{ii}, fieldVal{ii}] = strtok(partStr{ii},':');
+    fieldVal{ii} = strtrim(fieldVal{ii}(2:end));
+    verStruct.(fieldName{ii}) = fieldVal{ii};
+end
+
+
+if nField == 0
+    aDir = pwd;
+    cd(sw_rootdir);
+    [~, revNum] = system('git rev-list --count HEAD');
+    revNum = strtrim(revNum);
+    %[~, revNum] = system('svn info |grep Revision: |cut -c11-');
+    cd(aDir);
+    revNum = str2double(revNum)+1e3;
+end
+
+% Matlab version & Symbolic Toolbox
+if ~license('checkout','Symbolic_Toolbox')
+    strSym = 'no Symbolic Math Toolbox installed';
+else
+    strSym = 'Symbolic Math Toolbox installed';
+end
+
+
+if nargout == 0
     if nField == 0
         aDir = pwd;
         cd(sw_rootdir);
