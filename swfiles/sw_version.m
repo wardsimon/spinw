@@ -18,29 +18,24 @@ function outStr = sw_version()
 % release date and license.
 %
 
-if ~isdeployed
-    % read file header from sw_version.m file
-    fid = fopen('sw_version.m');
-    
-    % first line
-    fgets(fid);
-    % skip comments
+% Take into account deployed installs
+if isdeployed
+    outStr = struct;
+    return
+end
+
+% read file header from sw_version.m file
+fid = fopen('sw_version.m');
+
+% first line
+fgets(fid);
+% skip comments
+fLine = strtrim(fgets(fid));
+while numel(fLine)>0 && strcmp(fLine(1),'%')
     fLine = strtrim(fgets(fid));
     while numel(fLine)>0 && strcmp(fLine(1),'%')
         fLine = strtrim(fgets(fid));
     end
-    % skip empty lines
-    while numel(fLine)==0 || ~strcmp(fLine(1),'%')
-        fLine = strtrim(fgets(fid));
-    end
-    % read version information
-    verLine = {fLine};
-    while numel(verLine{end})>0 && strcmp(verLine{end}(1),'%')
-        verLine{end+1} = strtrim(fgets(fid)); %#ok<*AGROW>
-    end
-    verLine = verLine(1:end-1);
-    fclose(fid);
-    
 end
 
 nField = numel(partStr);
