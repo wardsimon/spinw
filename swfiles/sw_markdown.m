@@ -65,7 +65,8 @@ else
 
 end
 
-% remove the note marking
+% remove the note marking - note `newline` defined as didn't exist pre 16b
+newline = sprintf('\n');  %#ok<SPRINTFN>
 str = regexprep(str,'{{warning (.+?)}}',[newline repmat([symbol('skull') ' '],1,37) newline '$1' newline repmat([symbol('skull') ' '],1,37)]);
 str = regexprep(str,'{{note (.+?)}}',[newline repmat('~',1,75) newline '$1' newline repmat('~',1,75)]);
 
