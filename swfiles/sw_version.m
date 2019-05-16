@@ -91,23 +91,19 @@ if nargout == 0
         strSym = [v0(nSym).Name ' installed'];
     end
     
-    
-    if nargout == 0
-        if nField == 0
-            
-            if any(revNum)
-                fprintf('This version of SpinW (rev. num. %d) is not released yet!\n',revNum);
-            else
-                fprintf('This version of SpinW is not released yet!\n');
-            end
-        else
-            disp([verStruct.Name verStruct.Version ' (rev ' num2str(verStruct.Release) ')']);
-            onlineRev = sw_update;
-            if onlineRev > str2num(verStruct.Release) %#ok<ST2NM>
-                disp(['Newer version of SpinW is available online (rev. num. ' num2str(onlineRev) '), use the sw_update() function to download it!']);
-            else
-                disp('You have the latest version of SpinW!')
-            end
+else
+    ver0 = struct;
+    ver0.Name     = 'SpinW';
+    ver0.Version  = '';
+    ver0.Release  = '';
+    ver0.Date     = datestr(now,'dd-mmm-yyyy');
+    ver0.Author   = 'S. Tóth and S. Ward';
+    ver0.Contact  = 'admin@spinw.org, @spinw4 on Twitter';
+    ver0.License  = 'GNU GENERAL PUBLIC LICENSE';
+
+    if nField == 0
+        if any(revNum)
+            ver0.Release = num2str(revNum);
         end
         fprintf(['MATLAB version: ' version ', ' strSym '\n']);
         

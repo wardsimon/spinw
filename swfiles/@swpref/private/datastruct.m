@@ -75,7 +75,7 @@ d.Value = {
     1,...
     @cm_inferno,...
     false,...
-    'https://tsdev.github.io/spinwdoc'
+    'https://spinw.github.io/spinwdoc'
     };
 
 d.Label =  {
@@ -137,6 +137,15 @@ d.Label =  {
             out = 0;
             return
         end
+        
+        % TODO
+        % MEX is currently broken on >R2017b, so make a check
+        if ~verLessThan('matlab','9.4')
+            warning('swpref:MexError','Mex is currently unsuported on your version of MATLAB.\nWe are working on it...')
+            out = 0;
+            return
+        end
+        
         
         if ~(exist('chol_omp','file')==3 && exist('eig_omp','file')==3)
             % There is a path error for < R2017a
