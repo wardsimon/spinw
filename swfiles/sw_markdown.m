@@ -15,6 +15,11 @@ function str = sw_markdown(str,hotlinks)
 %
 % [swdoc], [matlab.help]
 %
+if verLessThan('Matlab','8.7')
+    nwl = sprintf('\n');
+else
+    nwl = newline;
+end
 
 if nargin<2
     hotlinks = feature('HotLinks');
@@ -65,10 +70,9 @@ else
 
 end
 
-% remove the note marking - note `newline` defined as didn't exist pre 16b
-newline = sprintf('\n');  %#ok<SPRINTFN>
-str = regexprep(str,'{{warning (.+?)}}',[newline repmat([symbol('skull') ' '],1,37) newline '$1' newline repmat([symbol('skull') ' '],1,37)]);
-str = regexprep(str,'{{note (.+?)}}',[newline repmat('~',1,75) newline '$1' newline repmat('~',1,75)]);
+% remove the note marking
+str = regexprep(str,'{{warning (.+?)}}',[nwl repmat([symbol('skull') ' '],1,37) nwl '$1' nwl repmat([symbol('skull') ' '],1,37)]);
+str = regexprep(str,'{{note (.+?)}}',[nwl repmat('~',1,75) nwl '$1' nwl repmat('~',1,75)]);
 
 if hotlinks
     str = regexprep(str,'`([\s\,\.\)\:])','</strong>$1');
@@ -101,6 +105,6 @@ str = regexprep(str,'\\(\w+)','${symbol($1,2)}');
 str = regexprep(str,'([\^\_]{1,1})\-([0-9]{1,1})','${symbol([''\\\\'' $1 ''-\\\\'' $1 $2])}');
 str = regexprep(str,'([\^\_]{1,1}[0-9]{1,1})','${symbol($1)}');
 
-%helpStr = regexprep(helpStr,'\n\s*?\n\s*?\n',[newLine newLine]);
+%helpStr = regexprep(helpStr,'\n\s*?\n\s*?\n',[nwl nwl]);
 
 end
