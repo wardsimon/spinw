@@ -415,6 +415,8 @@ classdef spinw < handle & matlab.mixin.SetGet
         %
         cache = struct('matom',[],'symop',[]);
         
+        % stores a brille object
+        brille
     end
     
     properties (Access = private)
@@ -476,6 +478,8 @@ classdef spinw < handle & matlab.mixin.SetGet
                 for ii = 1:length(fNames)
                    obj.(fNames{ii}) = objS.(fNames{ii});
                 end
+                obj.brille = brille(obj);
+                obj.addlistenermulti(3)
                 return
             end
             
@@ -531,7 +535,8 @@ classdef spinw < handle & matlab.mixin.SetGet
                 obj = sw_import(firstArg,false,obj);
                 
             end
-            
+            obj.brille = brille(obj);
+            obj.addlistenermulti(3)
         end % .spinw
         
         
@@ -654,6 +659,9 @@ classdef spinw < handle & matlab.mixin.SetGet
                     obj.propl(3) = addlistener(obj,'lattice',  'PostSet',@(evnt,src)obj.clearcache(2));
                     obj.propl(4) = addlistener(obj,'unit_cell','PostSet',@(evnt,src)obj.clearcache(2));
                     obj.propl(5) = addlistener(obj,'coupling', 'PostSet',@(evnt,src)obj.clearcache(2));
+                case 3
+                    obj.propl(6) = addlistener(obj, 'lattice','PostSet', @(event,src) obj.brille.updateLattice());
+                    obj.propl(7) = addlistener(obj, 'matrix', 'PostSet', @(event, src) obj.brille.fillFromSpinW());
             end
         end
         
