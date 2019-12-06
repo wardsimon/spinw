@@ -27,14 +27,13 @@ classdef brille < handle
             obj.createLattice(obj.spinwObj.lattice.lat_const.*obj.extent,...
                 obj.spinwObj.lattice.angle,...
                 obj.spinwObj.lattice.label)
-
         end
         
         function createLattice(obj, alatt, angdeg, spgrp)
             pylens = m2p( alatt(1:3) );
             pyangs = m2p( angdeg(1:3) );
             obj.lattice.dlat = py.brille.Direct(pylens, pyangs, spgrp);
-            obj.lattice.rlat = dlat.star;
+            obj.lattice.rlat = obj.lattice.dlat.star;
             % Check for the pesky P0 symmetry
             if (p2m(obj.lattice.rlat.hall) == 0)
                 warning('brille:spinwaveBrille', 'The symmetry is P0, falling back to P1')

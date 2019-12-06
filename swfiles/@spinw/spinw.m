@@ -421,7 +421,9 @@ classdef spinw < handle & matlab.mixin.SetGet
     
     properties (Access = private)
         % stores the property change listener handles
-        propl = event.proplistener.empty;
+        propl = struct('base1', event.proplistener.empty,...
+            'base2', event.proplistener.empty,...
+            'base3', event.proplistener.empty);
         % stores whether the couplings are generated under symmetry constraints
         sym   = false;
         % stores whether the calculation are done symbolically
@@ -606,7 +608,9 @@ classdef spinw < handle & matlab.mixin.SetGet
             % necessary
             if nargin<2
                 % delete the existing listener handles
-                delete(obj.propl(ishandle(obj.propl)));
+                delete(obj.propl.base1(ishandle(obj.propl.base1)));
+                delete(obj.propl.base2(ishandle(obj.propl.base2)));
+                delete(obj.propl.base3(ishandle(obj.propl.base3)));
                 % remove cache
                 obj.cache.matom = [];
                 obj.cache.symop = [];
@@ -618,12 +622,12 @@ classdef spinw < handle & matlab.mixin.SetGet
                     % magnetic atoms: delete the stored magnetic atom positions
                     obj.cache.matom = [];
                     % remove the listeners
-                    delete(obj.propl(1:2));
+                    delete(obj.propl.base1(1:2));
                 case 2
                     % bond symmetry operators: delete the stored operators
                     obj.cache.symop = [];
                     % remove the listeners
-                    delete(obj.propl(3:5));
+                    delete(obj.propl.base2(1:3));
             end
         end
 
@@ -652,16 +656,16 @@ classdef spinw < handle & matlab.mixin.SetGet
             switch chgField
                 case 1
                     % add listener to lattice and unit_cell fields
-                    obj.propl(1) = addlistener(obj,'lattice',  'PostSet',@(evnt,src)obj.clearcache(1));
-                    obj.propl(2) = addlistener(obj,'unit_cell','PostSet',@(evnt,src)obj.clearcache(1));
+                    obj.propl.base1(1) = addlistener(obj,'lattice',  'PostSet',@(evnt,src)obj.clearcache(1));
+                    obj.propl.base1(2) = addlistener(obj,'unit_cell','PostSet',@(evnt,src)obj.clearcache(1));
                 case 2
                     % add listener to lattice, unit_cell and coupling fields
-                    obj.propl(3) = addlistener(obj,'lattice',  'PostSet',@(evnt,src)obj.clearcache(2));
-                    obj.propl(4) = addlistener(obj,'unit_cell','PostSet',@(evnt,src)obj.clearcache(2));
-                    obj.propl(5) = addlistener(obj,'coupling', 'PostSet',@(evnt,src)obj.clearcache(2));
+                    obj.propl.base2(1) = addlistener(obj,'lattice',  'PostSet',@(evnt,src)obj.clearcache(2));
+                    obj.propl.base2(2) = addlistener(obj,'unit_cell','PostSet',@(evnt,src)obj.clearcache(2));
+                    obj.propl.base2(3) = addlistener(obj,'coupling', 'PostSet',@(evnt,src)obj.clearcache(2));
                 case 3
-                    obj.propl(6) = addlistener(obj, 'lattice','PostSet', @(event,src) obj.brille.updateLattice());
-                    obj.propl(7) = addlistener(obj, 'matrix', 'PostSet', @(event, src) obj.brille.fillFromSpinW());
+                    obj.propl.base3(1) = addlistener(obj, 'lattice','PostSet', @(evnt,src) obj.brille.updateLattice());
+                    obj.propl.base3(2) = addlistener(obj, 'matrix', 'PostSet', @(evnt,src) obj.brille.fillFromSpinW());
             end
         end
         
@@ -669,7 +673,9 @@ classdef spinw < handle & matlab.mixin.SetGet
             % remove property change listeners
             delete(obj.propl);
             % empty pointers
-            obj.propl = event.proplistener.empty;
+            obj.propl = struct('base1', event.proplistener.empty,...
+            'base2', event.proplistener.empty,...
+            'base3', event.proplistener.empty);
         end
 
         function lh = addlistener(varargin)
