@@ -284,6 +284,9 @@ end
 % lambda value for SCGA, empty will make integration in first loop
 specQ.lambda = [];
 
+if param.imagChk < 0
+    ioMax = 0;
+end
 for ii = 1:nQ
     if param.fibo
         Q = QF*hklA(ii);
@@ -321,6 +324,9 @@ for ii = 1:nQ
     specQ = sw_egrid(specQ,struct('Evect',param.Evect,'T',param.T,'binType',param.binType,...
     'imagChk',param.imagChk,'component',param.component),'noCheck');
     powSpec(:,ii) = sum(specQ.swConv,2)/param.nRand;
+    if param.imagChk < 0
+        ioMax = ioMax + specQ.ioMax;
+    end
     sw_timeit(ii/nQ*100,0,param.tid);
 end
 
@@ -353,6 +359,10 @@ switch funIdx
         spectra.helical  = specQ.helical;
     case 2
         spectra.lambda   = specQ.lambda;
+end
+
+if param.imagChk < 0
+    spectra.ioMax = ioMax;
 end
 
 end

@@ -452,9 +452,15 @@ if isfield(spectra,'omega')
         ioMax = max(abs(imag(omega{1}(:))));
         
         if ioMax > max(abs(dE(:)))
-            error('egrid:BadSolution',['The imaginary part of the spin '...
-                'wave energes is larger than the bin size! Improve '...
-                'your calculation or disable imagChk option!']);
+            if param.imagChk < 0
+                spectra.ioMax = ioMax;
+            else
+                error('egrid:BadSolution',['The imaginary part of the spin '...
+                    'wave energes is larger than the bin size! Improve '...
+                    'your calculation or disable imagChk option!']);
+            end
+        else
+            spectra.ioMax = 0;
         end
     end
     
