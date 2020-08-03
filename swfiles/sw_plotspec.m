@@ -458,7 +458,8 @@ if ~powmode
             lLabel = {'Q+k_m' 'Q' 'Q-k_m'};
         end
     else
-        error('sw_plotspec:NumberOfModes','Wrong number of spin wave modes!');
+        %error('sw_plotspec:NumberOfModes','Wrong number of spin wave modes!');
+        lLabel = {};
     end
 else
     nPlot     = 1;
