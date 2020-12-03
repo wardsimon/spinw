@@ -659,7 +659,7 @@ hklIdx = [floor(((1:nSlice)-1)/nSlice*nHkl)+1 nHkl+1];
 omega = zeros(2*nMagExt,0);
 
 % empty Sab
-Sab = zeros(3,3,2*nMagExt,0);
+Sab = zeros(3,3,2*nMagExt,nHkl);
 
 % Empty matrices to save different intermediate results for further
 % analysis: Hamiltonian, eigenvectors, dynamical structure factor in the
@@ -865,46 +865,36 @@ for jj = 1:nSlice
     if param.saveH
         Hsave(:,:,hklIdxMEM) = ham;
     end
-    
+
     % Calculates correlation functions.
-    % V right
-    VExtR = repmat(permute(V  ,[4 5 1 2 3]),[3 3 1 1 1]);
-    % V left: conjugate transpose of V
-    VExtL = conj(permute(VExtR,[1 2 4 3 5]));
-    
-    % Introduces the exp(-ikR) exponential factor.
     ExpF =  exp(-1i*sum(repmat(permute(hklExt0MEM,[1 3 2]),[1 nMagExt 1]).*repmat(RR,[1 1 nHklMEM]),1));
-    % Includes the sqrt(Si/2) prefactor.
     ExpF = ExpF.*repmat(sqrt(S0/2),[1 1 nHklMEM]);
-    
-    ExpFL =      repmat(permute(ExpF,[1 4 5 2 3]),[3 3 2*nMagExt 2]);
-    % conj transpose of ExpFL
-    ExpFR = conj(permute(ExpFL,[1 2 4 3 5]));
-    
+    ExpF =      repmat(permute(ExpF,[1 4 5 2 3]),[3 3 2*nMagExt 2]);
+    V = repmat(permute(V  ,[4 5 1 2 3]),[3 3 1 1 1]);
+
+    VExtL = conj(permute(V,[1 2 4 3 5]));
     zeda = repmat(permute([zed conj(zed)],[1 3 4 2]),[1 3 2*nMagExt 1 nHklMEM]);
-    % conj transpose of zeda
-    zedb = conj(permute(zeda,[2 1 4 3 5]));
-    
-    % calculate magnetic structure factor using the hklExt0 Q-values
-    % since the S(Q+/-k,omega) correlation functions also belong to the
-    % F(Q)^2 form factor
-    
     if param.formfact
-        % include the form factor in the z^alpha, z^beta matrices
         zeda = zeda.*repmat(permute(FF(:,hklIdxMEM),[3 4 5 1 2]),[3 3 2*nMagExt 2 1]);
-        zedb = zedb.*repmat(permute(FF(:,hklIdxMEM),[3 4 1 5 2]),[3 3 2 2*nMagExt 1]);
     end
-    
     if param.gtensor
-        % include the g-tensor
         zeda = mmat(repmat(permute(gtensor,[1 2 4 3]),[1 1 1 2]),zeda);
-        zedb = mmat(zedb,repmat(gtensor,[1 1 2]));
     end
-    % Dynamical structure factor from S^alpha^beta(k) correlation function.
-    % Sab(alpha,beta,iMode,iHkl), size: 3 x 3 x 2*nMagExt x nHkl.
-    % Normalizes the intensity to single unit cell.
-    Sab = cat(4,Sab,squeeze(sum(zeda.*ExpFL.*VExtL,4)).*squeeze(sum(zedb.*ExpFR.*VExtR,3))/prod(nExt));
-    
+    VExtL = zeda .* ExpF .* VExtL;
+
+    ExpF = conj(permute(ExpF,[1 2 4 3 5]));
+    zeda = repmat(permute([zed conj(zed)],[1 3 4 2]),[1 3 2*nMagExt 1 nHklMEM]);
+    zeda = conj(permute(zeda,[2 1 4 3 5]));
+    if param.formfact
+        zeda = zeda.*repmat(permute(FF(:,hklIdxMEM),[3 4 1 5 2]),[3 3 2 2*nMagExt 1]);
+    end
+    if param.gtensor
+        zeda = mmat(zeda,repmat(gtensor,[1 1 2]));
+    end
+    V = zeda .* ExpF .* V;
+    clear zeda ExpF;
+    Sab(:,:,:,hklIdxMEM) = squeeze(sum(VExtL, 4)) .* squeeze(sum(V, 3)) / prod(nExt);
+
     sw_timeit(jj/nSlice*100,0,param.tid);
 end
 
@@ -982,25 +972,18 @@ end
 if ~param.notwin
     % Rotate the calculated correlation function into the twin coordinate
     % system using rotC
-    SabAll = cell(1,nTwin);
+    %SabAll = cell(1,nTwin);
+    clear ham gham FF V VExtL hkl0 hklA0 ABCD idxAll;
+    Sab = single(Sab);
+    Sab = mat2cell(Sab, 3, 3, size(Sab,3), ones(1,nTwin).*size(Sab,4)/nTwin);
     for ii = 1:nTwin
-        % select the ii-th twin from the Q points
-        idx    = (1:nHkl0) + (ii-1)*nHkl0;
-        % select correlation function of twin ii
-        SabT   = Sab(:,:,:,idx);
-        % size of the correlation function matrix
-        sSabT  = size(SabT);
-        % convert the matrix into cell of 3x3 matrices
-        SabT   = reshape(SabT,3,3,[]);
-        % select the rotation matrix of twin ii
-        rotC   = obj.twin.rotc(:,:,ii);
-        % rotate correlation function using arrayfun
-        SabRot = arrayfun(@(idx)(rotC*SabT(:,:,idx)*(rotC')),1:size(SabT,3),'UniformOutput',false);
-        SabRot = cat(3,SabRot{:});
-        % resize back the correlation matrix
-        SabAll{ii} = reshape(SabRot,sSabT);
+        sSabT  = size(Sab{ii});
+        Sab{ii}   = reshape(Sab{ii},3,3,[]);
+        rotC   = obj.twin.rotc(:,:,ii);       
+        Sab{ii} = sw_mtimesx(Sab{ii}, rotC');
+        Sab{ii} = sw_mtimesx(rotC, Sab{ii});
+        Sab{ii} = reshape(Sab{ii}, sSabT);
     end
-    Sab = SabAll;
     
     if nTwin == 1
         Sab = Sab{1};
